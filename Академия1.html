@@ -1,0 +1,2281 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Академия Робота‑Учителя</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Comic Neue', 'Segoe UI', Roboto, cursive, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            color: #2d4059;
+            background: radial-gradient(circle at 20% 20%, #f9d56e, #f8b042);
+            transition: background 0.3s;
+        }
+        body.theme-dark { background: #1e1e2f; color: #e0e0e0; }
+        body.theme-dark #game { background: #2a2a3e; border-color: #5a4a7a; }
+        body.theme-dark .robot-message { background: #3a3a4e; color: #e0e0e0; }
+        body.theme-dark .stats { background: #3a3a4e; border-color: #5a4a7a; }
+        body.theme-dark .task { background: #3a3a4e; border-color: #ffae42; }
+        body.theme-dark input { background: #3a3a4e; color: #e0e0e0; border-color: #ffae42; }
+        body.theme-dark .ref-content { background: #3a3a4e; }
+        body.theme-dark .checkers-cell.white { background: #5a5a6e; }
+        body.theme-dark .achievement-badge { background: #4a4a5e; color: #e0e0e0; }
+        body.theme-dark .modal-content { background: #3a3a4e; color: #e0e0e0; }
+        body.theme-forest { background: radial-gradient(circle at 20% 20%, #a5d6a5, #2e7d32); }
+        body.theme-forest #game { background: rgba(230,245,220,0.95); border-color: #3c8d3c; }
+        body.theme-ocean { background: linear-gradient(145deg, #2b7a9c, #0f4c5c); }
+        body.theme-ocean #game { background: rgba(200,230,250,0.9); border-color: #1e88e5; }
+        #game {
+            max-width: 650px;
+            width: 100%;
+            background: rgba(255,255,255,0.95);
+            border-radius: 60px;
+            padding: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3), 0 0 0 8px #fcdb8b inset;
+            border: 5px solid #ffb347;
+        }
+        .robot {
+            background: #4a6b8a;
+            border-radius: 50px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            border: 4px solid #ffd966;
+            box-shadow: 0 8px 0 #2c3e50;
+        }
+        .robot-avatar { font-size: 3rem; background: #2e4057; padding: 10px; border-radius: 50%; min-width: 70px; width: auto; height: auto; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.1s; }
+        .robot-avatar:active { transform: scale(0.95); }
+        .robot-message { background: #fff3cd; padding: 15px 20px; border-radius: 40px; font-weight: bold; font-size: 1.2rem; flex: 1; }
+        .stats { display: flex; justify-content: space-around; background: #ffdd99; border-radius: 50px; padding: 12px; margin-bottom: 20px; font-weight: bold; border: 3px solid #d49b3b; flex-wrap: wrap; gap: 10px; }
+        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 20px 0; }
+        button {
+            background: #f9d342;
+            border: none;
+            border-radius: 60px;
+            padding: 16px 8px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2d4059;
+            box-shadow: 0 7px 0 #b47c2e;
+            transition: 0.07s ease;
+            cursor: pointer;
+        }
+        button:active { transform: translateY(4px); box-shadow: 0 3px 0 #b47c2e; }
+        button:disabled { opacity: 0.5; pointer-events: none; }
+        .back-btn { background: #b3c7e5; box-shadow: 0 7px 0 #6b7f9c; }
+        .screen { display: none; }
+        .screen.active { display: block; }
+        .progress { display: flex; justify-content: space-between; background: #ffe9b5; border-radius: 40px; padding: 10px 20px; margin: 15px 0; border: 2px solid #d4a259; }
+        .task { background: #e6f0ff; padding: 30px 15px; border-radius: 60px; font-size: 2rem; text-align: center; margin: 20px 0; border: 5px solid #ffae42; word-break: break-word; }
+        input { width: 100%; padding: 18px; font-size: 1.6rem; border-radius: 60px; border: 3px solid #ffb347; background: #fff7e6; text-align: center; margin-bottom: 20px; }
+        .row2 { display: flex; gap: 15px; flex-wrap: wrap; }
+        .coin { color: #b57c1c; font-weight: bold; }
+        body.theme-dark .coin { color: #ffd966; }
+        .achievement-badge { background: #ffd966; border-radius: 40px; padding: 10px 15px; margin: 5px; display: inline-block; border: 2px solid #b68b40; cursor: pointer; transition: transform 0.1s; font-size: 0.9rem; }
+        .achievement-badge:active { transform: scale(0.95); }
+        .notification { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #fff0b5; border-radius: 60px; padding: 15px 25px; display: none; z-index: 1000; font-weight: bold; font-size: 1rem; white-space: nowrap; }
+        @media (max-width: 550px) { .notification { white-space: normal; text-align: center; } }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 2000; }
+        .modal.active { display: flex; }
+        .modal-content { background: #fff3cd; border-radius: 60px; padding: 25px; border: 5px solid #ffb347; max-width: 400px; width: 90%; text-align: center; max-height: 90vh; overflow-y: auto; }
+        .child-card { background: #ffefc0; border-radius: 40px; padding: 20px; text-align: center; font-size: 1.5rem; box-shadow: 0 8px 0 #d4a259; cursor: pointer; transition: transform 0.1s; }
+        .child-card:active { transform: scale(0.98); }
+        .daily-task { background: #e0ffe0; border-radius: 30px; padding: 10px 15px; margin: 10px 0; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+        .daily-task.done { background: #d3d3d3; text-decoration: line-through; opacity: 0.7; }
+        .maze-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 2px; background: #654321; padding: 5px; border-radius: 20px; }
+        .maze-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; background: #a9d6e5; border-radius: 8px; cursor: pointer; }
+        .maze-cell.wall { background: #8b5a2b; }
+        .maze-cell.player { background: #ffd966; }
+        .maze-cell.gift { background: #4caf50; }
+        .checkers-board { display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px; background: #8b5a2b; padding: 10px; border-radius: 20px; overflow-x: auto; }
+        .checkers-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; border-radius: 8px; cursor: pointer; min-width: 30px; }
+        .checkers-cell.black { background: #b58863; }
+        .checkers-cell.white { background: #f0d9b5; }
+        body.theme-dark .checkers-cell.white { background: #8a8a9e; }
+        .checkers-cell.selected { border: 3px solid red; }
+        .checkers-piece { width: 80%; height: 80%; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+        .piece-black { background: #2c3e50; color: white; }
+        .piece-white { background: #ecf0f1; color: black; }
+        .tic-tac-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; background: #333; padding: 10px; border-radius: 20px; max-width: 300px; margin: 0 auto; }
+        .tic-tac-cell { aspect-ratio: 1; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; cursor: pointer; border-radius: 10px; transition: background 0.1s; }
+        .tic-tac-cell:hover { background: #e0e0e0; }
+        .pet-card { background: #ffe0b0; border-radius: 60px; padding: 20px; text-align: center; }
+        .avatar-shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; margin: 20px 0; }
+        .avatar-item { background: #ffefc0; border-radius: 40px; padding: 15px; text-align: center; cursor: pointer; transition: transform 0.1s; }
+        .avatar-item:active { transform: scale(0.95); }
+        .avatar-item.owned { border: 3px solid #4caf50; background: #d4edc9; }
+        .avatar-item.current { border: 3px solid #ffb347; background: #ffe0b0; }
+        .hint-text { background: #fff0b5; border-radius: 30px; padding: 10px; margin: 10px 0; font-size: 0.9rem; text-align: center; }
+        .game-controls { margin: 15px 0; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+        .ref-tabs { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; margin-bottom: 20px; }
+        .ref-tab { background: #b3c7e5; padding: 6px 12px; border-radius: 40px; cursor: pointer; font-weight: bold; font-size: 0.9rem; }
+        .ref-tab.active { background: #f9d342; }
+        .ref-content { background: #fff7e6; border-radius: 40px; padding: 20px; overflow-x: auto; }
+        .memory-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0; }
+        .memory-card { aspect-ratio: 1; background: #ffb347; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: bold; cursor: pointer; transition: 0.1s; box-shadow: 0 5px 0 #b47c2e; }
+        .memory-card.flipped, .memory-card.matched { background: #a5d6a5; transform: scale(0.98); box-shadow: 0 2px 0 #b47c2e; }
+        .memory-card.matched { opacity: 0.6; cursor: default; }
+        .battleship-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; background: #2c3e50; padding: 10px; border-radius: 20px; margin: 15px 0; overflow-x: auto; }
+        .battleship-cell { aspect-ratio: 1; background: #3498db; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem; cursor: pointer; transition: 0.1s; min-width: 30px; }
+        .battleship-cell.hit { background: #e74c3c; }
+        .battleship-cell.miss { background: #95a5a6; }
+        .sudoku-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; background: #333; padding: 10px; border-radius: 20px; max-width: 300px; margin: 0 auto; }
+        .sudoku-cell { aspect-ratio: 1; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: bold; cursor: pointer; border-radius: 10px; }
+        .sudoku-cell.selected { background: #ffd966; }
+        .shoot-game { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+        .shoot-options { display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; }
+        .shoot-option { background: #ffb347; padding: 12px 20px; border-radius: 50px; font-size: 1.3rem; cursor: pointer; transition: 0.1s; }
+        .shoot-option:active { transform: scale(0.95); }
+        .timer { font-size: 1.8rem; font-weight: bold; font-family: monospace; text-align: center; }
+        .clock-emojis { font-size: 4rem; text-align: center; letter-spacing: 10px; }
+        .stat-row { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #ffd966; flex-wrap: wrap; gap: 10px; }
+        .stat-label { font-weight: bold; }
+        .finger-display { font-size: 5rem; text-align: center; letter-spacing: 15px; }
+        @media (max-width: 550px) {
+            .menu-grid { grid-template-columns: 1fr; }
+            .task { font-size: 1.3rem; }
+            input { font-size: 1.1rem; padding: 12px; }
+            button { font-size: 0.9rem; padding: 12px 6px; }
+            .stats { font-size: 0.7rem; }
+            .avatar-shop-grid { grid-template-columns: repeat(2, 1fr); }
+            .achievement-badge { font-size: 0.7rem; padding: 5px 10px; }
+            .robot-avatar { font-size: 2rem; min-width: 50px; }
+            .robot-message { font-size: 0.9rem; }
+            .finger-display { font-size: 3rem; letter-spacing: 5px; }
+        }
+    </style>
+</head>
+<body>
+<div id="game">
+    <div class="robot" id="robotHeader" style="display: none;">
+        <div class="robot-avatar" id="robotAvatar">🤖</div>
+        <div class="robot-message" id="robotMsg">Привет! Решено: 0</div>
+    </div>
+    <div class="stats" id="statsHeader" style="display: none;">
+        <span>🏆 <span id="achCount">0</span></span>
+        <span>🪙 <span id="coinCount">0</span></span>
+        <span>📚 <span id="solvedCount">0</span></span>
+        <span>🔥 <span id="streakCount">0</span></span>
+    </div>
+
+    <div id="childSelect" class="screen active"><h2>👋 Привет! Кто ты?</h2><div id="childList" class="menu-grid"></div><button id="addNewChildBtn">➕ Новый ученик</button><button id="parentAccessBtn">🔐 Родителям</button></div>
+    <div id="mainMenu" class="screen"><div class="menu-grid"><button data-screen="lessonType">📚 УРОКИ</button><button data-screen="arcade">🕹️ ИГРОТЕКА</button><button data-screen="shopMenu">🏪 МАГАЗИН</button><button data-screen="achievements">🏆 НАГРАДЫ</button><button data-screen="daily">📅 ЗАДАНИЯ</button><button data-screen="reference">📖 СПРАВОЧНИК</button><button data-screen="settings">⚙️ НАСТРОЙКИ</button><button id="switchChildBtn">👤 Сменить ребёнка</button><button id="exitBtn">🚪 ВЫХОД</button></div></div>
+    <div id="lessonType" class="screen"><h2>🌍 Выбери мир</h2><div class="menu-grid"><button data-world="+">➕ Лес сложения</button><button data-world="-">➖ Пустыня вычитания</button><button data-world="*">✖️ Океан умножения</button><button data-world="/">➗ Космос деления</button><button data-world="compare">🔍 Сравнение</button><button data-section="logic">🧩 Логика</button><button data-section="marathon">🏃 Марафон</button><button class="back-btn" data-back="mainMenu">↩️ Назад</button></div></div>
+    <div id="lessonSection" class="screen"><h2>📐 Раздел</h2><div class="menu-grid"><button data-section="standard">① Примеры</button><button data-section="missing">❓ Найди число</button><button data-section="text">📝 Словесные задачи</button><button data-section="chain">🔗 Цепочки</button><button data-section="neighbors">🔢 Соседи числа</button><button data-section="truefalse">✓✗ Истина/Ложь</button><button class="back-btn" data-back="lessonType">↩️ Назад</button></div></div>
+    <div id="lessonScreen" class="screen"><h2 id="lessonTitle">ЛЕС СЛОЖЕНИЯ</h2><div class="progress"><span>Шаг <span id="stepCur">1</span>/<span id="stepTotal">5</span></span><span id="livesDisplay">❤️❤️❤️</span></div><div id="bossIndicator" style="display:none; font-size:2rem;">👾 БОСС 👾</div><div class="task" id="taskText">2+2</div><div id="hintArea" class="hint-text" style="display:none;"></div><input type="text" id="answerInput" placeholder="Твой ответ"><div class="row2"><button id="submitAnswer">✅ Ответить</button><button id="skipLesson">⏭️ Пропуск</button></div><button class="back-btn" id="quitLesson">↩️ Выйти</button></div>
+    
+    <div id="arcade" class="screen"><h2>🕹️ Игротека</h2><div class="menu-grid" id="arcadeMenu"><button id="showMaze">🗺️ Лабиринт</button><button id="showWord">❓ Слово</button><button id="showCheckers">⚫ Шашки</button><button id="showTicTac">❌ Крестики-нолики</button><button id="showMemory">🧠 Найди пару</button><button id="showBattleship">🚢 Морской бой</button><button id="showSudoku">🧩 Судоку 4×4</button><button id="showShootGame">🎯 Попади в цель</button><button id="showCompareFast">⚡ Сравни числа</button><button id="showFingerCount">🖐️ Счёт на пальцах</button><button id="showNumberComposition">🔢 Состав числа</button><button id="showClockGame">⏰ Который час?</button><button id="showChangeGame">💰 Сдача в магазине</button><button id="showPet">🐾 Питомцы</button><button class="back-btn" data-back="mainMenu">↩️ Назад</button></div></div>
+    
+    <div id="gameMazeScreen" class="screen"><h2>🗺️ Лабиринт</h2><div id="mazeArea"></div><button class="back-btn" data-back="arcade">↩️ Назад</button></div>
+    <div id="gameWordScreen" class="screen"><h2>❓ Отгадай слово</h2><div id="wordArea"></div><button class="back-btn" data-back="arcade">↩️ Назад</button></div>
+    <div id="gameCheckersScreen" class="screen"><h2>⚫ Шашки</h2><div id="checkersArea"></div><button class="back-btn" data-back="arcade">↩️ Назад</button></div>
+    <div id="gameTicTacScreen" class="screen"><h2>❌ Крестики-нолики</h2><div id="ticTacArea"></div><button class="back-btn" data-back="arcade">↩️ Назад</button></div>
+    <div id="gameMemoryScreen" class="screen"><h2>🧠 Найди пару</h2><div id="memoryArea"></div><button class="back-btn" data-back="arcade">↩️ Назад</button></div>
+    <div id="gameBattleshipScreen" class="screen"><h2>🚢 Морской бой</h2><div id="battleshipArea"></div><button class="back-btn" data-back="arcade">↩️ Назад</button></div>
+    <div id="gameSudokuScreen" class="screen"><h2>🧩 Судоку 4×4</h2><div id="sudokuArea"></div><button class="back-btn" data-back="arcade">↩️ Назад</button></div>
+    <div id="gameShootScreen" class="screen"><h2>🎯 Попади в цель</h2><div id="shootArea"></div><button class="back-btn" data-back="arcade">↩️ Назад</button></div>
+    <div id="gameCompareFastScreen" class="screen"><h2>⚡ Сравни числа</h2><div id="compareFastArea"></div><button class="back-btn" data-back="arcade">↩️ Назад</button></div>
+    <div id="gameFingerScreen" class="screen"><h2>🖐️ Счёт на пальцах</h2><div id="fingerArea"></div><button class="back-btn" data-back="arcade">↩️ Назад</button></div>
+    <div id="gameCompositionScreen" class="screen"><h2>🔢 Состав числа</h2><div id="compositionArea"></div><button class="back-btn" data-back="arcade">↩️ Назад</button></div>
+    <div id="gameClockScreen" class="screen"><h2>⏰ Который час?</h2><div id="clockArea"></div><button class="back-btn" data-back="arcade">↩️ Назад</button></div>
+    <div id="gameChangeScreen" class="screen"><h2>💰 Сдача в магазине</h2><div id="changeArea"></div><button class="back-btn" data-back="arcade">↩️ Назад</button></div>
+    <div id="petScreen" class="screen"><h2>🐾 Мой питомец</h2><div id="petDisplay"></div><button class="back-btn" data-back="arcade">↩️ Назад</button></div>
+    
+    <div id="shopMenu" class="screen"><h2>🏪 Магазин</h2><div class="menu-grid"><button id="shopBuyBtn">🛒 Купить</button><button id="shopInventoryBtn">📦 Инвентарь</button><button id="shopAvatarBtn">🤖 Сменить робота</button><button id="shopThemesBtn">🎨 Темы</button><button class="back-btn" data-back="mainMenu">↩️ Назад</button></div></div>
+    <div id="shop" class="screen"><h2>🏪 Магазин</h2><p>Твои монеты: <span class="coin" id="shopCoins">0</span></p><div class="menu-grid" id="shopItemsGrid"></div><button class="back-btn" data-back="shopMenu">↩️ Назад</button></div>
+    <div id="avatarShop" class="screen"><h2>🤖 Сменить робота</h2><p>Монеты: <span class="coin" id="avatarCoins">0</span></p><div class="avatar-shop-grid" id="avatarGrid"></div><button class="back-btn" data-back="shopMenu">↩️ Назад</button></div>
+    <div id="themesShop" class="screen"><h2>🎨 Темы оформления</h2><p>Монеты: <span class="coin" id="themesCoins">0</span></p><div class="menu-grid" id="themesGrid"></div><button class="back-btn" data-back="shopMenu">↩️ Назад</button></div>
+    <div id="inventory" class="screen"><h2>📦 Инвентарь</h2><div id="inventoryList"></div><button class="back-btn" data-back="shopMenu">↩️ Назад</button></div>
+    
+    <div id="achievements" class="screen"><h2>🏆 Награды</h2><div id="achievementList"></div><button class="back-btn" data-back="mainMenu">↩️ Назад</button></div>
+    <div id="daily" class="screen"><h2>📅 Задания</h2><div id="dailyTasksList"></div><button class="back-btn" data-back="mainMenu">↩️ Назад</button></div>
+    
+    <div id="reference" class="screen"><h2>📖 Справочник</h2><div class="ref-tabs"><span class="ref-tab" data-ref="tab1">➕ Сложение</span><span class="ref-tab" data-ref="tab2">➖ Вычитание</span><span class="ref-tab" data-ref="tab3">✖️ Умножение</span><span class="ref-tab" data-ref="tab4">➗ Деление</span><span class="ref-tab" data-ref="tab5">🍕 Дроби</span><span class="ref-tab" data-ref="tab6">🕰️ Время</span><span class="ref-tab" data-ref="tab7">📏 Единицы</span><span class="ref-tab" data-ref="tab8">💰 Деньги</span><span class="ref-tab" data-ref="tab9">❌ Мои ошибки</span></div><div id="refContent" class="ref-content"></div><button class="back-btn" data-back="mainMenu">↩️ Назад</button></div>
+    
+    <div id="settings" class="screen"><h2>⚙️ Настройки</h2><div><span>🎵 Музыка</span> <input type="checkbox" id="musicToggle" checked></div><div><span>🌓 Тема</span> <select id="themeSelect"><option value="default">Пустынная</option><option value="ocean">Морская</option><option value="forest">Лесная</option><option value="dark">Тёмная</option></select></div><div><span>🔊 Голос</span> <input type="checkbox" id="voiceToggle" checked></div><button class="back-btn" data-back="mainMenu">↩️ Назад</button></div>
+    
+    <div id="parent" class="screen"><h2>👨‍👩‍👧 Родительский кабинет</h2><div id="parentLoginArea"><input type="password" id="parentPwd" placeholder="Мастер-пароль"><button id="enterParentBtn">🔓 Войти</button></div><div id="parentPanel" style="display:none;"><h3>👥 Дети</h3><div id="childManagement"></div><button id="addChildFromParentBtn">➕ Добавить ребёнка</button><hr><h3>📊 Полная статистика</h3><select id="parentChildSelector"></select><div id="childStatsFull"></div><hr><h3>🔒 Контроль</h3><p>💰 Заработано: <span id="pcEarned">0</span> 💸 Потрачено: <span id="pcSpent">0</span></p><p>⏱️ Лимит (мин): <input type="number" id="pcTimeLimit" style="width:80px"> <button id="pcSetLimitBtn">Установить</button></p><button id="changeMasterPwdBtn">🔐 Сменить пароль</button><button id="parentLogoutBtn">🚪 Выйти</button></div><button class="back-btn" data-back="childSelect">↩️ Назад</button></div>
+    
+    <div id="difficultyModal" class="modal"><div class="modal-content"><h3>🎲 Выбери сложность</h3><button id="diffEasy">🌱 Легко (1-10)</button><button id="diffMedium">🌿 Средне (1-50)</button><button id="diffHard">🌳 Сложно (1-100)</button><button id="cancelDifficulty">Отмена</button></div></div>
+    <div id="newChildModal" class="modal"><div class="modal-content"><h3>👶 Имя ученика</h3><input type="text" id="newChildName"><input type="password" id="newChildPwd" placeholder="Пароль"><button id="createChildBtn">Создать</button><button id="cancelNewChildBtn">Отмена</button></div></div>
+    <div id="childLoginModal" class="modal"><div class="modal-content"><h3>🔐 Пароль</h3><input type="password" id="childPwdInput"><button id="submitChildPwdBtn">Войти</button><button id="cancelChildLoginBtn">Отмена</button></div></div>
+    <div id="petNameModal" class="modal"><div class="modal-content"><h3>🐾 Имя питомца</h3><input type="text" id="petNameInput"><button id="petNameSaveBtn">Сохранить</button><button id="petNameCancelBtn">Отмена</button></div></div>
+    <div id="achievementDescModal" class="modal"><div class="modal-content"><h3 id="achievementModalTitle">🏆</h3><p id="achievementModalText"></p><button id="closeAchievementDescBtn">Закрыть</button></div></div>
+    <div id="notification" class="notification"></div>
+</div>
+
+<script>
+// ==================== ОСНОВНЫЕ ДАННЫЕ ====================
+let data = {
+    total_solved: 0, achievements: [], coins: 0, coins_earned_total: 0,
+    purchases_count: 0, skip_token: 0, revive_token: 0, perfect_rounds: 0,
+    skin_theme: "default", daily_tasks: [], last_daily_date: "", last_login_date: "",
+    login_streak: 0, passwordHash: "", pet: null, purchase_log: [],
+    lesson_log: [], current_avatar: "🤖", owned_avatars: ["🤖"], owned_themes: ["default"],
+    daily_stats: [], mistakes: [], boosters: { multiplier: 0, multiplier_left: 0, shield: false, luck: false },
+    games_unlocked: 0
+};
+let currentChild = null, childrenList = [], masterPasswordHash = "";
+let currentWorld = '+', currentSection = 'standard', currentDifficulty = 10;
+let currentStep = 1, currentLives = 3, currentScore = 0, currentTask = null, totalSteps = 5;
+let errorCount = 0, hintShown = false;
+let musicEnabled = true, voiceEnabled = true;
+let audioCtx = null, musicInterval = null;
+let gameTimer = null;
+
+// Достижения
+const achievementsList = [
+    { id: 'first', name: '📜 Первые шаги', desc: 'Реши первую задачу', reward: 10 },
+    { id: 'ten', name: '🎯 Десятка', desc: 'Реши 10 задач', reward: 15 },
+    { id: 'twenty', name: '🌟 20 задач', desc: 'Реши 20 задач', reward: 20 },
+    { id: 'fifty', name: '💪 50 задач', desc: 'Реши 50 задач', reward: 30 },
+    { id: 'hundred', name: '🎉 100 задач', desc: 'Реши 100 задач', reward: 50 },
+    { id: 'coin10', name: '🪙 10 монет', desc: 'Накопи 10 монет', reward: 5 },
+    { id: 'coin50', name: '💰 50 монет', desc: 'Накопи 50 монет', reward: 10 },
+    { id: 'coin100', name: '💎 100 монет', desc: 'Накопи 100 монет', reward: 20 },
+    { id: 'streak3', name: '📅 3 дня подряд', desc: 'Заходи в игру 3 дня подряд', reward: 15 },
+    { id: 'streak7', name: '⭐ Неделя', desc: 'Заходи в игру 7 дней подряд', reward: 30 },
+    { id: 'perfect1', name: '🎯 Первый идеальный', desc: 'Сделай идеальный раунд', reward: 20 },
+    { id: 'buyFirst', name: '🛍️ Первая покупка', desc: 'Купи что-нибудь в магазине', reward: 10 },
+    { id: 'collector', name: '🧩 Коллекционер', desc: 'Накопи 3 пропуска', reward: 30 },
+    { id: 'petOwner', name: '🐾 Друг питомцев', desc: 'Купи питомца', reward: 30 },
+    { id: 'mazeMaster', name: '🗺️ Исследователь', desc: 'Пройди лабиринт', reward: 20 },
+    { id: 'wordMaster', name: '❓ Словесник', desc: 'Отгадай слово', reward: 20 },
+    { id: 'checkersWin', name: '⚫ Шашист', desc: 'Выиграй в шашки', reward: 25 },
+    { id: 'ticTacWin', name: '❌ Крестик', desc: 'Выиграй в крестики-нолики', reward: 20 },
+    { id: 'memoryMaster', name: '🧠 Мастер памяти', desc: 'Пройди игру Найди пару', reward: 25 },
+    { id: 'battleshipMaster', name: '🚢 Адмирал', desc: 'Победи в морском бое', reward: 30 },
+    { id: 'sudokuMaster', name: '🧩 Судоку-мастер', desc: 'Реши судоку 4×4', reward: 25 },
+    { id: 'shootMaster', name: '🎯 Снайпер', desc: 'Попади в 10 целей', reward: 25 },
+    { id: 'fastCompare', name: '⚡ Быстрый ум', desc: 'Правильно сравни 20 чисел', reward: 25 },
+    { id: 'clockMaster', name: '🕐 Повелитель времени', desc: 'Правильно определи время 5 раз', reward: 20 }
+];
+
+// Аватары
+const avatarsList = [
+    { emoji: "🤖", name: "Робот", price: 0 },
+    { emoji: "🦾", name: "Кибер-робот", price: 30 },
+    { emoji: "🧙‍♂️", name: "Робот-маг", price: 30 },
+    { emoji: "🦸‍♂️", name: "Супер-робот", price: 30 },
+    { emoji: "🐻‍❄️", name: "Робот-мишка", price: 25 },
+    { emoji: "🐉", name: "Робот-дракон", price: 40 },
+    { emoji: "👨‍🚀", name: "Робот-космонавт", price: 35 },
+    { emoji: "🧑‍🎄", name: "Робот-Дед Мороз", price: 30 }
+];
+
+// Питомцы
+const petsList = [
+    { type: 'dog', emoji: '🐕', name: 'Собака', price: 50, ability: 'double_reward', abilityDesc: 'Удваивает монеты за идеальный раунд' },
+    { type: 'cat', emoji: '🐈', name: 'Кошка', price: 50, ability: 'hint', abilityDesc: 'Один раз подскажет решение' },
+    { type: 'hamster', emoji: '🐹', name: 'Хомяк', price: 50, ability: 'extra_life', abilityDesc: 'Даёт +1 жизнь в уроке' },
+    { type: 'fox', emoji: '🦊', name: 'Лисёнок', price: 75, ability: 'daily_bonus', abilityDesc: 'Приносит 1 монету каждый день' },
+    { type: 'penguin', emoji: '🐧', name: 'Пингвин', price: 75, ability: 'monday_bonus', abilityDesc: 'В понедельник +5 монет' },
+    { type: 'koala', emoji: '🐨', name: 'Коала', price: 100, ability: 'double_round', abilityDesc: 'Удваивает награду за раунд' }
+];
+
+// Товары магазина
+const shopGoods = [
+    { id: 'skip', name: '⤴️ Пропуск', price: 50, desc: 'Позволяет пропустить задание' },
+    { id: 'revive', name: '♻️ Воскрешение', price: 60, desc: 'Восстанавливает 3 жизни' },
+    { id: 'multiplier', name: '⚡ Удвоитель (3 задачи)', price: 40, desc: 'Удваивает монеты на 3 задачи' },
+    { id: 'shield', name: '🛡️ Защита (1 жизнь)', price: 25, desc: 'Даёт +1 жизнь в уроке' },
+    { id: 'luck', name: '🍀 Талисман удачи (+10%)', price: 100, desc: '+10% ко всем монетам' },
+    { id: 'chest', name: '🎁 Секретный сундук', price: 50, desc: 'Случайный бонус (10-100 монет)' }
+];
+
+// ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
+function showNotification(text, isGood = true) {
+    const n = document.getElementById('notification');
+    n.textContent = text;
+    n.style.background = isGood ? '#d4edc9' : '#ffe0b0';
+    n.style.display = 'block';
+    setTimeout(() => n.style.display = 'none', 2500);
+}
+
+function playSound(type) {
+    if (!musicEnabled) return;
+    try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        let freq = 440, duration = 0.1;
+        if (type === 'correct') { freq = 880; duration = 0.15; }
+        else if (type === 'wrong') { freq = 220; duration = 0.2; }
+        else if (type === 'coin') { freq = 1200; duration = 0.1; }
+        else if (type === 'achievement') { freq = 1500; duration = 0.3; }
+        else if (type === 'move') { freq = 600; duration = 0.05; }
+        osc.frequency.setValueAtTime(freq, now);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+        osc.start(now);
+        osc.stop(now + duration);
+    } catch(e) {}
+}
+
+function speak(text) {
+    if (!voiceEnabled || !window.speechSynthesis) return;
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = 'ru';
+    utter.rate = 0.9;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(utter);
+}
+
+function hashPassword(pwd) { return btoa(pwd); }
+function verifyPassword(input, hash) { return btoa(input) === hash; }
+
+function showConfetti() {
+    for (let i = 0; i < 30; i++) {
+        const conf = document.createElement('div');
+        conf.textContent = ['🎉', '✨', '⭐', '🌟', '🎊'][Math.floor(Math.random() * 5)];
+        conf.style.position = 'fixed';
+        conf.style.left = Math.random() * 100 + '%';
+        conf.style.top = '-20px';
+        conf.style.fontSize = (Math.random() * 20 + 15) + 'px';
+        conf.style.pointerEvents = 'none';
+        conf.style.zIndex = '9999';
+        conf.style.transition = 'all 1s ease-out';
+        document.body.appendChild(conf);
+        setTimeout(() => { conf.style.top = '100vh'; conf.style.opacity = '0'; }, 10);
+        setTimeout(() => conf.remove(), 1100);
+    }
+}
+
+function addAchievement(id) {
+    const ach = achievementsList.find(a => a.id === id);
+    if (ach && !data.achievements.includes(ach.name)) {
+        data.achievements.push(ach.name);
+        let reward = ach.reward || 10;
+        if (data.boosters.luck) reward = Math.floor(reward * 1.1);
+        data.coins += reward;
+        data.coins_earned_total += reward;
+        saveData();
+        showNotification(`✨ Новая награда: ${ach.name} +${reward}🪙`, true);
+        playSound('achievement');
+        showConfetti();
+        refreshAchievements();
+        updateStatsUI();
+    }
+}
+
+function checkAllAchievements() {
+    if (data.total_solved >= 1) addAchievement('first');
+    if (data.total_solved >= 10) addAchievement('ten');
+    if (data.total_solved >= 20) addAchievement('twenty');
+    if (data.total_solved >= 50) addAchievement('fifty');
+    if (data.total_solved >= 100) addAchievement('hundred');
+    if (data.coins_earned_total >= 10) addAchievement('coin10');
+    if (data.coins_earned_total >= 50) addAchievement('coin50');
+    if (data.coins_earned_total >= 100) addAchievement('coin100');
+    if (data.login_streak >= 3) addAchievement('streak3');
+    if (data.login_streak >= 7) addAchievement('streak7');
+    if (data.perfect_rounds >= 1) addAchievement('perfect1');
+    if (data.purchases_count >= 1) addAchievement('buyFirst');
+    if (data.skip_token >= 3) addAchievement('collector');
+    if (data.pet) addAchievement('petOwner');
+}
+
+function refreshAchievements() {
+    const list = document.getElementById('achievementList');
+    if (!list) return;
+    list.innerHTML = '';
+    if (data.achievements.length === 0) {
+        list.innerHTML = '<p>Пока нет наград. Решай задачи и получай достижения!</p>';
+        return;
+    }
+    data.achievements.forEach(achName => {
+        const ach = achievementsList.find(a => a.name === achName);
+        const span = document.createElement('span');
+        span.className = 'achievement-badge';
+        span.textContent = `⭐ ${achName}`;
+        span.onclick = () => {
+            document.getElementById('achievementModalTitle').textContent = achName;
+            document.getElementById('achievementModalText').textContent = ach ? ach.desc : achName;
+            document.getElementById('achievementDescModal').classList.add('active');
+        };
+        list.appendChild(span);
+    });
+}
+
+// ==================== ИГРА 1: ЛАБИРИНТ ====================
+let mazeMap = [], mazePlayerX = 1, mazePlayerY = 1, mazeGiftX = 7, mazeGiftY = 7;
+
+function startMazeGame() {
+    showScreen('gameMazeScreen');
+    generateMaze();
+    renderMaze();
+}
+
+function generateMaze() {
+    mazeMap = [
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#'],
+        ['#', '#', '#', ' ', '#', '#', '#', ' ', '#'],
+        ['#', ' ', '#', ' ', ' ', ' ', '#', ' ', '#'],
+        ['#', ' ', '#', '#', '#', ' ', '#', ' ', '#'],
+        ['#', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#'],
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#']
+    ];
+    mazePlayerX = 1;
+    mazePlayerY = 1;
+    mazeGiftX = 5;
+    mazeGiftY = 7;
+}
+
+function renderMaze() {
+    const area = document.getElementById('mazeArea');
+    let html = '<div class="maze-grid">';
+    for (let i = 0; i < mazeMap.length; i++) {
+        for (let j = 0; j < mazeMap[0].length; j++) {
+            let cellClass = 'maze-cell';
+            let content = '';
+            if (mazeMap[i][j] === '#') { cellClass += ' wall'; content = '🧱'; }
+            else if (i === mazePlayerX && j === mazePlayerY) { cellClass += ' player'; content = '👦'; }
+            else if (i === mazeGiftX && j === mazeGiftY) { cellClass += ' gift'; content = '🎁'; }
+            else { content = '⬜'; }
+            html += `<div class="${cellClass}" data-x="${i}" data-y="${j}">${content}</div>`;
+        }
+    }
+    html += '</div><div class="game-controls"><button id="mazeUp">⬆️</button><button id="mazeDown">⬇️</button><button id="mazeLeft">⬅️</button><button id="mazeRight">➡️</button></div><p>Найди подарок 🎁</p>';
+    area.innerHTML = html;
+    
+    document.getElementById('mazeUp').onclick = () => movePlayer(-1, 0);
+    document.getElementById('mazeDown').onclick = () => movePlayer(1, 0);
+    document.getElementById('mazeLeft').onclick = () => movePlayer(0, -1);
+    document.getElementById('mazeRight').onclick = () => movePlayer(0, 1);
+}
+
+function movePlayer(dx, dy) {
+    const newX = mazePlayerX + dx;
+    const newY = mazePlayerY + dy;
+    if (mazeMap[newX] && mazeMap[newX][newY] && mazeMap[newX][newY] !== '#') {
+        mazePlayerX = newX;
+        mazePlayerY = newY;
+        if (mazePlayerX === mazeGiftX && mazePlayerY === mazeGiftY) {
+            let reward = 5;
+            if (data.boosters.luck) reward = Math.floor(reward * 1.1);
+            data.coins += reward;
+            data.coins_earned_total += reward;
+            saveData();
+            refreshUI();
+            addAchievement('mazeMaster');
+            showNotification(`🎉 Ты нашёл подарок! +${reward}🪙`, true);
+            playSound('achievement');
+            showScreen('arcade');
+            return;
+        }
+        renderMaze();
+        playSound('move');
+    } else {
+        showNotification('🚫 Туда нельзя', false);
+    }
+}
+
+// ==================== ИГРА 2: ВИСЕЛИЦА (СЛОВО) ====================
+let wordGameWord = '', wordGameGuessed = [], wordGameAttempts = 7, wordGameWrong = [];
+
+function startWordGame() {
+    showScreen('gameWordScreen');
+    const words = ["ШКОЛА", "КОСМОС", "РОБОТ", "ЯБЛОКО", "СОЛНЦЕ", "ПЛАНЕТА", "ГАЛАКТИКА", "АТОМ", "МОЛЕКУЛА", "МАТЕМАТИКА"];
+    wordGameWord = words[Math.floor(Math.random() * words.length)];
+    wordGameGuessed = '_'.repeat(wordGameWord.length).split('');
+    wordGameAttempts = 7;
+    wordGameWrong = [];
+    renderWordGame();
+}
+
+function renderWordGame() {
+    const area = document.getElementById('wordArea');
+    let html = `<div style="background:#ffe68f; padding:20px; border-radius:40px;">
+        <p style="font-size:2rem; letter-spacing:10px;">${wordGameGuessed.join(' ')}</p>
+        <p>Ошибки (${wordGameAttempts}): ${wordGameWrong.join(', ') || '—'}</p>
+        <input type="text" id="wordGuess" maxlength="1" style="width:80px; font-size:2rem; text-align:center;" placeholder="?">
+        <button id="submitWordBtn">✅ Проверить</button>
+        <button id="quitWordBtn">↩️ Выйти</button>
+    </div>`;
+    area.innerHTML = html;
+    document.getElementById('submitWordBtn').onclick = () => {
+        const letter = document.getElementById('wordGuess').value.toUpperCase();
+        if (!letter || letter.length !== 1) return;
+        if (wordGameWrong.includes(letter) || wordGameGuessed.includes(letter)) {
+            showNotification('Уже было!', false);
+            return;
+        }
+        if (wordGameWord.includes(letter)) {
+            for (let i = 0; i < wordGameWord.length; i++) if (wordGameWord[i] === letter) wordGameGuessed[i] = letter;
+            showNotification('✅ Есть такая буква!', true);
+            playSound('correct');
+        } else {
+            wordGameWrong.push(letter);
+            wordGameAttempts--;
+            showNotification(`❌ Нет такой буквы. Осталось ${wordGameAttempts} попыток`, false);
+            playSound('wrong');
+        }
+        if (wordGameGuessed.join('') === wordGameWord) {
+            let reward = 5;
+            if (data.boosters.luck) reward = Math.floor(reward * 1.1);
+            data.coins += reward;
+            data.coins_earned_total += reward;
+            saveData();
+            refreshUI();
+            addAchievement('wordMaster');
+            showNotification(`🎉 Ты отгадал слово! +${reward}🪙`, true);
+            playSound('achievement');
+            showScreen('arcade');
+            return;
+        }
+        if (wordGameAttempts <= 0) {
+            showNotification(`😢 Ты проиграл. Слово: ${wordGameWord}`, false);
+            showScreen('arcade');
+            return;
+        }
+        renderWordGame();
+    };
+    document.getElementById('quitWordBtn').onclick = () => showScreen('arcade');
+}
+
+// ==================== ИГРА 3: ШАШКИ ====================
+let checkersBoard = [], currentPlayer = 'black', selectedRow = -1, selectedCol = -1, gameOverCheckers = false;
+
+function startCheckers() {
+    showScreen('gameCheckersScreen');
+    initCheckers();
+}
+
+function initCheckers() {
+    checkersBoard = [];
+    for (let r = 0; r < 8; r++) {
+        let row = [];
+        for (let c = 0; c < 8; c++) {
+            if (r < 3 && (r + c) % 2 === 1) row.push('black');
+            else if (r > 4 && (r + c) % 2 === 1) row.push('white');
+            else row.push(null);
+        }
+        checkersBoard.push(row);
+    }
+    currentPlayer = 'black';
+    selectedRow = -1;
+    gameOverCheckers = false;
+    renderCheckers();
+}
+
+function renderCheckers() {
+    const area = document.getElementById('checkersArea');
+    let html = '<div class="checkers-board">';
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+            const cellColor = (r + c) % 2 === 0 ? 'white' : 'black';
+            const piece = checkersBoard[r][c];
+            let pieceHtml = '';
+            if (piece) {
+                const colorClass = piece.startsWith('black') ? 'piece-black' : 'piece-white';
+                pieceHtml = `<div class="checkers-piece ${colorClass}">${piece.includes('king') ? '♔' : '●'}</div>`;
+            }
+            const selectedClass = (r === selectedRow && c === selectedCol) ? 'selected' : '';
+            html += `<div class="checkers-cell ${cellColor} ${selectedClass}" data-row="${r}" data-col="${c}">${pieceHtml}</div>`;
+        }
+    }
+    html += '</div>';
+    html += `<p>Ходят: ${currentPlayer === 'black' ? '⚫ Чёрные' : '⚪ Белые'}</p>`;
+    if (gameOverCheckers) html += `<p>🎉 Игра окончена!</p>`;
+    area.innerHTML = html;
+    
+    document.querySelectorAll('.checkers-cell').forEach(cell => {
+        cell.onclick = () => {
+            if (gameOverCheckers) return;
+            const row = parseInt(cell.dataset.row);
+            const col = parseInt(cell.dataset.col);
+            handleCheckersClick(row, col);
+        };
+    });
+}
+
+function handleCheckersClick(row, col) {
+    if (selectedRow === -1) {
+        const piece = checkersBoard[row][col];
+        if (piece && piece.startsWith(currentPlayer)) {
+            selectedRow = row;
+            selectedCol = col;
+            renderCheckers();
+            playSound('move');
+        }
+        return;
+    }
+    const fromRow = selectedRow, fromCol = selectedCol;
+    const piece = checkersBoard[fromRow][fromCol];
+    if (!piece) { selectedRow = -1; renderCheckers(); return; }
+    if (fromRow === row && fromCol === col) { selectedRow = -1; renderCheckers(); return; }
+    const dr = row - fromRow, dc = col - fromCol;
+    
+    if (Math.abs(dr) === 1 && Math.abs(dc) === 1) {
+        if (checkersBoard[row][col] !== null) { selectedRow = -1; renderCheckers(); return; }
+        if (!piece.includes('king')) {
+            if (currentPlayer === 'black' && dr !== 1) return;
+            if (currentPlayer === 'white' && dr !== -1) return;
+        }
+        checkersBoard[row][col] = piece;
+        checkersBoard[fromRow][fromCol] = null;
+        if (currentPlayer === 'black' && row === 7) checkersBoard[row][col] = 'black_king';
+        if (currentPlayer === 'white' && row === 0) checkersBoard[row][col] = 'white_king';
+        selectedRow = -1;
+        currentPlayer = currentPlayer === 'black' ? 'white' : 'black';
+        playSound('move');
+        renderCheckers();
+        checkWinCheckers();
+        return;
+    }
+    if (Math.abs(dr) === 2 && Math.abs(dc) === 2) {
+        const midRow = fromRow + dr / 2, midCol = fromCol + dc / 2;
+        const midPiece = checkersBoard[midRow][midCol];
+        if (!midPiece || midPiece.startsWith(currentPlayer)) return;
+        if (checkersBoard[row][col] !== null) return;
+        checkersBoard[row][col] = piece;
+        checkersBoard[fromRow][fromCol] = null;
+        checkersBoard[midRow][midCol] = null;
+        if (currentPlayer === 'black' && row === 7) checkersBoard[row][col] = 'black_king';
+        if (currentPlayer === 'white' && row === 0) checkersBoard[row][col] = 'white_king';
+        selectedRow = -1;
+        currentPlayer = currentPlayer === 'black' ? 'white' : 'black';
+        playSound('achievement');
+        renderCheckers();
+        checkWinCheckers();
+        return;
+    }
+    selectedRow = -1;
+    renderCheckers();
+}
+
+function checkWinCheckers() {
+    let hasBlack = false, hasWhite = false;
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+            if (checkersBoard[r][c] && checkersBoard[r][c].startsWith('black')) hasBlack = true;
+            if (checkersBoard[r][c] && checkersBoard[r][c].startsWith('white')) hasWhite = true;
+        }
+    }
+    if (!hasBlack || !hasWhite) {
+        gameOverCheckers = true;
+        const winner = !hasBlack ? '⚪ Белые' : '⚫ Чёрные';
+        let reward = 5;
+        if (data.boosters.luck) reward = Math.floor(reward * 1.1);
+        data.coins += reward;
+        data.coins_earned_total += reward;
+        saveData();
+        refreshUI();
+        addAchievement('checkersWin');
+        showNotification(`🏆 Победили ${winner}! +${reward}🪙`, true);
+        playSound('achievement');
+        renderCheckers();
+    }
+}
+
+// ==================== ИГРА 4: КРЕСТИКИ-НОЛИКИ ====================
+let ticTacBoard = ['', '', '', '', '', '', '', '', ''];
+let ticTacPlayer = 'X';
+let ticTacGameOver = false;
+
+function startTicTac() {
+    showScreen('gameTicTacScreen');
+    ticTacBoard = ['', '', '', '', '', '', '', '', ''];
+    ticTacPlayer = 'X';
+    ticTacGameOver = false;
+    renderTicTac();
+}
+
+function renderTicTac() {
+    const area = document.getElementById('ticTacArea');
+    let html = '<div class="tic-tac-board">';
+    for (let i = 0; i < 9; i++) {
+        html += `<div class="tic-tac-cell" data-index="${i}">${ticTacBoard[i]}</div>`;
+    }
+    html += '</div>';
+    const winner = checkTicTacWinner();
+    if (winner) {
+        if (winner === 'draw') html += '<p>Ничья!</p>';
+        else {
+            html += `<p>Победил ${winner}!</p>`;
+            if (winner === 'X') {
+                let reward = 5;
+                if (data.boosters.luck) reward = Math.floor(reward * 1.1);
+                data.coins += reward;
+                data.coins_earned_total += reward;
+                saveData();
+                refreshUI();
+                addAchievement('ticTacWin');
+                showNotification(`🎉 Победа! +${reward}🪙`, true);
+                playSound('achievement');
+            }
+        }
+    } else {
+        html += `<p>Ходит: ${ticTacPlayer}</p>`;
+    }
+    area.innerHTML = html;
+    
+    document.querySelectorAll('.tic-tac-cell').forEach(cell => {
+        cell.onclick = () => {
+            if (ticTacGameOver) return;
+            const idx = parseInt(cell.dataset.index);
+            if (ticTacBoard[idx] !== '') return;
+            ticTacBoard[idx] = ticTacPlayer;
+            const winner = checkTicTacWinner();
+            if (winner) {
+                ticTacGameOver = true;
+                renderTicTac();
+                return;
+            }
+            ticTacPlayer = ticTacPlayer === 'X' ? 'O' : 'X';
+            renderTicTac();
+            if (!ticTacGameOver && ticTacPlayer === 'O') setTimeout(() => botMoveTicTac(), 500);
+        };
+    });
+}
+
+function botMoveTicTac() {
+    if (ticTacGameOver) return;
+    const empty = [];
+    for (let i = 0; i < 9; i++) if (ticTacBoard[i] === '') empty.push(i);
+    if (empty.length === 0) return;
+    const move = empty[Math.floor(Math.random() * empty.length)];
+    ticTacBoard[move] = 'O';
+    const winner = checkTicTacWinner();
+    if (winner) {
+        ticTacGameOver = true;
+        renderTicTac();
+        return;
+    }
+    ticTacPlayer = 'X';
+    renderTicTac();
+}
+
+function checkTicTacWinner() {
+    const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    for (let line of lines) {
+        if (ticTacBoard[line[0]] && ticTacBoard[line[0]] === ticTacBoard[line[1]] && ticTacBoard[line[1]] === ticTacBoard[line[2]]) {
+            return ticTacBoard[line[0]];
+        }
+    }
+    if (ticTacBoard.every(cell => cell !== '')) return 'draw';
+    return null;
+}
+
+// ==================== ИГРА 5: НАЙДИ ПАРУ ====================
+let memoryCards = [], memoryFlipped = [], memoryLocked = false, memoryMatches = 0;
+
+function startMemoryGame() {
+    showScreen('gameMemoryScreen');
+    const pairs = [
+        { text: "3 × 4", pair: "12" }, { text: "5 + 7", pair: "12" },
+        { text: "8 - 3", pair: "5" }, { text: "2 × 6", pair: "12" },
+        { text: "9 ÷ 3", pair: "3" }, { text: "4 + 4", pair: "8" },
+        { text: "10 - 2", pair: "8" }, { text: "6 × 2", pair: "12" }
+    ];
+    memoryCards = [];
+    pairs.forEach(p => {
+        memoryCards.push({ text: p.text, pair: p.pair, matched: false });
+        memoryCards.push({ text: p.pair, pair: p.text, matched: false });
+    });
+    memoryCards.sort(() => Math.random() - 0.5);
+    memoryFlipped = [];
+    memoryLocked = false;
+    memoryMatches = 0;
+    renderMemoryGame();
+}
+
+function renderMemoryGame() {
+    const area = document.getElementById('memoryArea');
+    let html = '<div class="memory-grid">';
+    memoryCards.forEach((card, idx) => {
+        const isFlipped = memoryFlipped.includes(idx);
+        let classes = 'memory-card';
+        if (isFlipped || card.matched) classes += ' flipped';
+        if (card.matched) classes += ' matched';
+        html += `<div class="${classes}" data-idx="${idx}">${(isFlipped || card.matched) ? card.text : '❓'}</div>`;
+    });
+    html += '</div><p>🎯 Найди все пары! За победу +5 монет</p>';
+    area.innerHTML = html;
+    
+    document.querySelectorAll('.memory-card').forEach(el => {
+        if (!memoryCards[parseInt(el.dataset.idx)].matched) {
+            el.onclick = () => handleMemoryClick(parseInt(el.dataset.idx));
+        }
+    });
+}
+
+function handleMemoryClick(idx) {
+    if (memoryLocked) return;
+    if (memoryFlipped.includes(idx)) return;
+    if (memoryCards[idx].matched) return;
+    if (memoryFlipped.length === 2) return;
+    memoryFlipped.push(idx);
+    renderMemoryGame();
+    
+    if (memoryFlipped.length === 2) {
+        memoryLocked = true;
+        const card1 = memoryCards[memoryFlipped[0]];
+        const card2 = memoryCards[memoryFlipped[1]];
+        if ((card1.text === card2.pair && card1.pair === card2.text) || (card1.pair === card2.text && card2.pair === card1.text)) {
+            card1.matched = true;
+            card2.matched = true;
+            memoryMatches++;
+            playSound('correct');
+            showNotification('✅ Пара найдена!', true);
+            memoryFlipped = [];
+            memoryLocked = false;
+            renderMemoryGame();
+            if (memoryMatches === 8) {
+                let reward = 5;
+                if (data.boosters.luck) reward = Math.floor(reward * 1.1);
+                data.coins += reward;
+                data.coins_earned_total += reward;
+                saveData();
+                refreshUI();
+                addAchievement('memoryMaster');
+                showNotification(`🎉 Ты победил! +${reward}🪙`, true);
+                playSound('achievement');
+                showScreen('arcade');
+            }
+        } else {
+            setTimeout(() => {
+                memoryFlipped = [];
+                memoryLocked = false;
+                renderMemoryGame();
+                playSound('move');
+            }, 800);
+        }
+    }
+}
+
+// ==================== ИГРА 6: МОРСКОЙ БОЙ ====================
+let battleshipPlayerBoard = [], battleshipBotBoard = [], battleshipPlayerShips = 5, battleshipBotShips = 5, battleshipGameOver = false, battleshipTurn = 'player';
+
+function startBattleship() {
+    showScreen('gameBattleshipScreen');
+    initBattleship();
+}
+
+function initBattleship() {
+    battleshipPlayerBoard = Array(8).fill().map(() => Array(8).fill(null));
+    battleshipBotBoard = Array(8).fill().map(() => Array(8).fill(null));
+    placeShips(battleshipPlayerBoard, 5);
+    placeShips(battleshipBotBoard, 5);
+    battleshipPlayerShips = 5;
+    battleshipBotShips = 5;
+    battleshipGameOver = false;
+    battleshipTurn = 'player';
+    renderBattleship();
+}
+
+function placeShips(board, count) {
+    let placed = 0;
+    while (placed < count) {
+        const row = Math.floor(Math.random() * 8);
+        const col = Math.floor(Math.random() * 8);
+        if (board[row][col] !== 'ship') {
+            board[row][col] = 'ship';
+            placed++;
+        }
+    }
+}
+
+function renderBattleship() {
+    const area = document.getElementById('battleshipArea');
+    let html = '<div style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">';
+    html += '<div><h3>🎯 Твои выстрелы</h3><div class="battleship-grid">';
+    for (let i = 0; i < 8; i++) {
+        for (let j = 0; j < 8; j++) {
+            const cell = battleshipPlayerBoard[i][j];
+            let content = '🌊', classes = 'battleship-cell';
+            if (cell === 'hit') { classes += ' hit'; content = '💥'; }
+            else if (cell === 'miss') { classes += ' miss'; content = '❌'; }
+            html += `<div class="${classes}" data-row="${i}" data-col="${j}" data-board="player">${content}</div>`;
+        }
+    }
+    html += '</div></div>';
+    html += '<div><h3>🤖 Выстрелы бота</h3><div class="battleship-grid">';
+    for (let i = 0; i < 8; i++) {
+        for (let j = 0; j < 8; j++) {
+            const cell = battleshipBotBoard[i][j];
+            let content = '🌊', classes = 'battleship-cell';
+            if (cell === 'hit') { classes += ' hit'; content = '💥'; }
+            else if (cell === 'miss') { classes += ' miss'; content = '❌'; }
+            html += `<div class="${classes}" data-row="${i}" data-col="${j}" data-board="bot">${content}</div>`;
+        }
+    }
+    html += '</div></div></div>';
+    html += `<div style="margin-top:15px;">`;
+    if (battleshipGameOver) {
+        if (battleshipPlayerShips === 0) html += '🎉 ПОБЕДА!';
+        else html += '😢 ПОРАЖЕНИЕ...';
+    } else {
+        html += `${battleshipTurn === 'player' ? '✅ ТВОЙ ХОД!' : '⏳ Бот думает...'}<br>`;
+        html += `🚢 Твои корабли: ${battleshipBotShips} | 🤖 Корабли бота: ${battleshipPlayerShips}`;
+    }
+    html += `</div><button id="resetBattleshipBtn" style="margin-top:10px;">🔄 Новая игра</button>`;
+    area.innerHTML = html;
+    
+    document.querySelectorAll('[data-board="player"]').forEach(el => {
+        el.onclick = () => {
+            if (battleshipGameOver || battleshipTurn !== 'player') return;
+            const row = parseInt(el.dataset.row);
+            const col = parseInt(el.dataset.col);
+            handlePlayerShot(row, col);
+        };
+    });
+    document.getElementById('resetBattleshipBtn').onclick = () => initBattleship();
+}
+
+function handlePlayerShot(row, col) {
+    const cell = battleshipPlayerBoard[row][col];
+    if (cell === 'hit' || cell === 'miss') { showNotification('Ты уже стрелял сюда!', false); return; }
+    if (cell === 'ship') {
+        battleshipPlayerBoard[row][col] = 'hit';
+        battleshipPlayerShips--;
+        playSound('correct');
+        showNotification('💥 Попадание!', true);
+    } else {
+        battleshipPlayerBoard[row][col] = 'miss';
+        playSound('move');
+        showNotification('❌ Мимо!', false);
+    }
+    if (battleshipPlayerShips === 0) {
+        battleshipGameOver = true;
+        let reward = 5;
+        if (data.boosters.luck) reward = Math.floor(reward * 1.1);
+        data.coins += reward;
+        data.coins_earned_total += reward;
+        saveData();
+        refreshUI();
+        addAchievement('battleshipMaster');
+        showNotification(`🎉 ПОБЕДА! +${reward}🪙`, true);
+        playSound('achievement');
+        renderBattleship();
+        return;
+    }
+    battleshipTurn = 'bot';
+    renderBattleship();
+    setTimeout(() => botTurnBattleship(), 800);
+}
+
+function botTurnBattleship() {
+    if (battleshipGameOver || battleshipTurn !== 'bot') return;
+    const available = [];
+    for (let i = 0; i < 8; i++) {
+        for (let j = 0; j < 8; j++) {
+            if (battleshipBotBoard[i][j] !== 'hit' && battleshipBotBoard[i][j] !== 'miss') {
+                available.push({ row: i, col: j });
+            }
+        }
+    }
+    if (available.length === 0) { battleshipGameOver = true; renderBattleship(); return; }
+    const shot = available[Math.floor(Math.random() * available.length)];
+    if (battleshipBotBoard[shot.row][shot.col] === 'ship') {
+        battleshipBotBoard[shot.row][shot.col] = 'hit';
+        battleshipBotShips--;
+        showNotification('🤖 Бот попал!', false);
+        playSound('wrong');
+    } else {
+        battleshipBotBoard[shot.row][shot.col] = 'miss';
+        showNotification('🤖 Бот промахнулся!', true);
+        playSound('move');
+    }
+    if (battleshipBotShips === 0) {
+        battleshipGameOver = true;
+        showNotification('😢 ПОРАЖЕНИЕ!', false);
+        renderBattleship();
+        return;
+    }
+    battleshipTurn = 'player';
+    renderBattleship();
+}
+
+// ==================== ИГРА 7: СУДОКУ 4×4 ====================
+let sudokuBoard = [], sudokuSelected = null;
+
+function startSudoku() {
+    showScreen('gameSudokuScreen');
+    generateSudoku();
+}
+
+function generateSudoku() {
+    sudokuBoard = [
+        [1, 2, 3, 4],
+        [3, 4, 1, 2],
+        [2, 1, 4, 3],
+        [4, 3, 2, 1]
+    ];
+    for (let i = 0; i < 8; i++) {
+        const row = Math.floor(Math.random() * 4);
+        const col = Math.floor(Math.random() * 4);
+        sudokuBoard[row][col] = null;
+    }
+    sudokuSelected = null;
+    renderSudoku();
+}
+
+function renderSudoku() {
+    const area = document.getElementById('sudokuArea');
+    let html = '<div class="sudoku-grid">';
+    for (let i = 0; i < 4; i++) {
+        for (let j = 0; j < 4; j++) {
+            const val = sudokuBoard[i][j];
+            const isSelected = sudokuSelected && sudokuSelected.row === i && sudokuSelected.col === j;
+            html += `<div class="sudoku-cell ${isSelected ? 'selected' : ''}" data-row="${i}" data-col="${j}">${val !== null ? val : '?'}</div>`;
+        }
+    }
+    html += '</div><div style="margin-top:15px;"><div style="display:flex; gap:10px; justify-content:center;">';
+    for (let n = 1; n <= 4; n++) {
+        html += `<button class="sudoku-num" data-num="${n}" style="width:60px;">${n}</button>`;
+    }
+    html += '</div><button id="checkSudokuBtn" style="margin-top:15px;">✅ Проверить</button></div>';
+    area.innerHTML = html;
+    
+    document.querySelectorAll('.sudoku-cell').forEach(cell => {
+        cell.onclick = () => {
+            const row = parseInt(cell.dataset.row);
+            const col = parseInt(cell.dataset.col);
+            if (sudokuBoard[row][col] === null) {
+                sudokuSelected = { row, col };
+                renderSudoku();
+            }
+        };
+    });
+    document.querySelectorAll('.sudoku-num').forEach(btn => {
+        btn.onclick = () => {
+            if (!sudokuSelected) return;
+            const num = parseInt(btn.dataset.num);
+            sudokuBoard[sudokuSelected.row][sudokuSelected.col] = num;
+            sudokuSelected = null;
+            renderSudoku();
+        };
+    });
+    document.getElementById('checkSudokuBtn').onclick = () => checkSudokuSolution();
+}
+
+function checkSudokuSolution() {
+    for (let i = 0; i < 4; i++) {
+        const rowSet = new Set();
+        const colSet = new Set();
+        for (let j = 0; j < 4; j++) {
+            if (sudokuBoard[i][j] === null) { showNotification('❌ Заполни все клетки!', false); return; }
+            rowSet.add(sudokuBoard[i][j]);
+            if (sudokuBoard[j][i] === null) { showNotification('❌ Заполни все клетки!', false); return; }
+            colSet.add(sudokuBoard[j][i]);
+        }
+        if (rowSet.size !== 4) { showNotification('❌ Неправильное решение!', false); return; }
+        if (colSet.size !== 4) { showNotification('❌ Неправильное решение!', false); return; }
+    }
+    let reward = 5;
+    if (data.boosters.luck) reward = Math.floor(reward * 1.1);
+    data.coins += reward;
+    data.coins_earned_total += reward;
+    saveData();
+    refreshUI();
+    addAchievement('sudokuMaster');
+    showNotification(`🎉 Судоку решено! +${reward}🪙`, true);
+    playSound('achievement');
+    showScreen('arcade');
+}
+
+// ==================== ИГРА 8: ПОПАДИ В ЦЕЛЬ ====================
+let shootQuestion = null, shootScore = 0, shootGameActive = true;
+
+function startShootGame() {
+    showScreen('gameShootScreen');
+    shootScore = 0;
+    shootGameActive = true;
+    nextShootQuestion();
+}
+
+function nextShootQuestion() {
+    if (!shootGameActive) return;
+    const a = Math.floor(Math.random() * 20) + 1;
+    const b = Math.floor(Math.random() * 20) + 1;
+    const correct = a + b;
+    const wrong1 = correct + Math.floor(Math.random() * 5) + 1;
+    const wrong2 = Math.max(1, correct - Math.floor(Math.random() * 5) - 1);
+    const options = [correct, wrong1, wrong2];
+    for (let i = options.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [options[i], options[j]] = [options[j], options[i]];
+    }
+    shootQuestion = { text: `${a} + ${b} = ?`, correct: correct, options: options };
+    renderShootGame();
+}
+
+function renderShootGame() {
+    const area = document.getElementById('shootArea');
+    let timeLeft = 12;
+    let html = `<div class="shoot-game"><div class="timer" id="shootTimer">⏱️ ${timeLeft}</div><div style="font-size:3rem; text-align:center;">${shootQuestion.text}</div><div class="shoot-options">`;
+    shootQuestion.options.forEach(opt => {
+        html += `<div class="shoot-option" data-value="${opt}">${opt}</div>`;
+    });
+    html += `</div><div>🎯 Счёт: ${shootScore}/10</div></div>`;
+    area.innerHTML = html;
+    
+    if (gameTimer) clearInterval(gameTimer);
+    gameTimer = setInterval(() => {
+        timeLeft--;
+        const timerEl = document.getElementById('shootTimer');
+        if (timerEl) timerEl.textContent = `⏱️ ${timeLeft}`;
+        if (timeLeft <= 0) {
+            clearInterval(gameTimer);
+            showNotification('⏰ Время вышло!', false);
+            shootGameActive = false;
+            setTimeout(() => showScreen('arcade'), 1500);
+        }
+    }, 1000);
+    
+    document.querySelectorAll('.shoot-option').forEach(opt => {
+        opt.onclick = () => {
+            if (!shootGameActive) return;
+            const value = parseInt(opt.dataset.value);
+            if (value === shootQuestion.correct) {
+                shootScore++;
+                playSound('correct');
+                showNotification('✅ Попадание!', true);
+                if (shootScore >= 10) {
+                    clearInterval(gameTimer);
+                    let reward = 5;
+                    if (data.boosters.luck) reward = Math.floor(reward * 1.1);
+                    data.coins += reward;
+                    data.coins_earned_total += reward;
+                    saveData();
+                    refreshUI();
+                    addAchievement('shootMaster');
+                    showNotification(`🎉 Победа! +${reward}🪙`, true);
+                    playSound('achievement');
+                    shootGameActive = false;
+                    setTimeout(() => showScreen('arcade'), 1500);
+                } else {
+                    nextShootQuestion();
+                }
+            } else {
+                clearInterval(gameTimer);
+                showNotification('❌ Мимо!', false);
+                playSound('wrong');
+                shootGameActive = false;
+                setTimeout(() => showScreen('arcade'), 1500);
+            }
+        };
+    });
+}
+
+// ==================== ИГРА 9: СРАВНИ ЧИСЛА ====================
+let compareScore = 0, compareGameActive = true;
+
+function startCompareFast() {
+    showScreen('gameCompareFastScreen');
+    compareScore = 0;
+    compareGameActive = true;
+    nextCompareQuestion();
+}
+
+function nextCompareQuestion() {
+    if (!compareGameActive) return;
+    const a = Math.floor(Math.random() * 100) + 1;
+    const b = Math.floor(Math.random() * 100) + 1;
+    const correct = a < b ? '<' : (a > b ? '>' : '=');
+    renderCompareGame(a, b, correct);
+}
+
+function renderCompareGame(a, b, correct) {
+    const area = document.getElementById('compareFastArea');
+    let timeLeft = 12;
+    let html = `<div style="text-align:center;"><div class="timer" id="compareTimer">⏱️ ${timeLeft}</div><div style="font-size:3rem;">${a} ? ${b}</div><div class="shoot-options"><div class="shoot-option" data-ans="<">&lt;</div><div class="shoot-option" data-ans=">">&gt;</div><div class="shoot-option" data-ans="=">=</div></div><div>🎯 Счёт: ${compareScore}/20</div></div>`;
+    area.innerHTML = html;
+    
+    if (gameTimer) clearInterval(gameTimer);
+    gameTimer = setInterval(() => {
+        timeLeft--;
+        const timerEl = document.getElementById('compareTimer');
+        if (timerEl) timerEl.textContent = `⏱️ ${timeLeft}`;
+        if (timeLeft <= 0) {
+            clearInterval(gameTimer);
+            showNotification('⏰ Время вышло!', false);
+            compareGameActive = false;
+            setTimeout(() => showScreen('arcade'), 1500);
+        }
+    }, 1000);
+    
+    document.querySelectorAll('.shoot-option').forEach(opt => {
+        opt.onclick = () => {
+            if (!compareGameActive) return;
+            const ans = opt.dataset.ans;
+            if (ans === correct) {
+                compareScore++;
+                playSound('correct');
+                if (compareScore >= 20) {
+                    clearInterval(gameTimer);
+                    let reward = 5;
+                    if (data.boosters.luck) reward = Math.floor(reward * 1.1);
+                    data.coins += reward;
+                    data.coins_earned_total += reward;
+                    saveData();
+                    refreshUI();
+                    addAchievement('fastCompare');
+                    showNotification(`🎉 Победа! +${reward}🪙`, true);
+                    playSound('achievement');
+                    compareGameActive = false;
+                    setTimeout(() => showScreen('arcade'), 1500);
+                } else {
+                    nextCompareQuestion();
+                }
+            } else {
+                clearInterval(gameTimer);
+                showNotification('❌ Неправильно!', false);
+                playSound('wrong');
+                compareGameActive = false;
+                setTimeout(() => showScreen('arcade'), 1500);
+            }
+        };
+    });
+}
+
+// ==================== ИГРА 10: СЧЁТ НА ПАЛЬЦАХ ====================
+function startFingerCount() {
+    showScreen('gameFingerScreen');
+    const num = Math.floor(Math.random() * 10) + 1;
+    const fingers = '🖐️'.repeat(num);
+    const area = document.getElementById('fingerArea');
+    area.innerHTML = `<div style="text-align:center;"><div class="finger-display">${fingers}</div><div style="font-size:2rem; margin:20px;">Сколько пальцев?</div><input type="number" id="fingerAnswer" style="width:150px; font-size:2rem; text-align:center;"><button id="fingerSubmitBtn" style="margin-top:15px;">✅ Проверить</button></div>`;
+    document.getElementById('fingerSubmitBtn').onclick = () => {
+        const answer = parseInt(document.getElementById('fingerAnswer').value);
+        if (answer === num) {
+            let reward = 3;
+            if (data.boosters.luck) reward = Math.floor(reward * 1.1);
+            data.coins += reward;
+            data.coins_earned_total += reward;
+            saveData();
+            refreshUI();
+            showNotification(`✅ Правильно! +${reward}🪙`, true);
+            playSound('correct');
+        } else {
+            showNotification(`❌ Неправильно! Правильный ответ: ${num}`, false);
+            playSound('wrong');
+        }
+        setTimeout(() => showScreen('arcade'), 1500);
+    };
+}
+
+// ==================== ИГРА 11: СОСТАВ ЧИСЛА ====================
+function startNumberComposition() {
+    showScreen('gameCompositionScreen');
+    const total = Math.floor(Math.random() * 10) + 5;
+    const part = Math.floor(Math.random() * (total - 1)) + 1;
+    const missing = total - part;
+    const area = document.getElementById('compositionArea');
+    area.innerHTML = `<div style="text-align:center;"><div style="font-size:2rem;">${total} = ${part} + ?</div><input type="number" id="compAnswer" style="width:150px; font-size:2rem; text-align:center;"><button id="compSubmitBtn" style="margin-top:15px;">✅ Проверить</button></div>`;
+    document.getElementById('compSubmitBtn').onclick = () => {
+        const answer = parseInt(document.getElementById('compAnswer').value);
+        if (answer === missing) {
+            let reward = 3;
+            if (data.boosters.luck) reward = Math.floor(reward * 1.1);
+            data.coins += reward;
+            data.coins_earned_total += reward;
+            saveData();
+            refreshUI();
+            showNotification(`✅ Правильно! +${reward}🪙`, true);
+            playSound('correct');
+        } else {
+            showNotification(`❌ Неправильно! Правильный ответ: ${missing}`, false);
+            playSound('wrong');
+        }
+        setTimeout(() => showScreen('arcade'), 1500);
+    };
+}
+
+// ==================== ИГРА 12: КОТОРЫЙ ЧАС? ====================
+function startClockGame() {
+    showScreen('gameClockScreen');
+    const hour = Math.floor(Math.random() * 12) + 1;
+    const minute = Math.floor(Math.random() * 12) * 5;
+    const clockEmojis = {1:'🕐',2:'🕑',3:'🕒',4:'🕓',5:'🕔',6:'🕕',7:'🕖',8:'🕗',9:'🕘',10:'🕙',11:'🕚',12:'🕛'};
+    let clockEmoji = clockEmojis[hour];
+    if (minute === 30) clockEmoji = '🕝';
+    else if (minute === 15) clockEmoji = '🕜';
+    else if (minute === 45) clockEmoji = '🕞';
+    
+    const area = document.getElementById('clockArea');
+    area.innerHTML = `<div style="text-align:center;"><div class="clock-emojis">${clockEmoji}</div><div style="font-size:1.5rem; margin:15px;">Который час? Напиши в формате часы:минуты</div><input type="text" id="clockAnswer" placeholder="например: 3:15" style="width:200px; text-align:center;"><button id="clockSubmitBtn" style="margin-top:15px;">✅ Проверить</button></div>`;
+    let timeLeft = 15;
+    if (gameTimer) clearInterval(gameTimer);
+    gameTimer = setInterval(() => {
+        timeLeft--;
+        if (timeLeft <= 0) {
+            clearInterval(gameTimer);
+            showNotification('⏰ Время вышло!', false);
+            setTimeout(() => showScreen('arcade'), 1500);
+        }
+    }, 1000);
+    
+    document.getElementById('clockSubmitBtn').onclick = () => {
+        clearInterval(gameTimer);
+        const answer = document.getElementById('clockAnswer').value.trim();
+        const expected = `${hour}:${minute.toString().padStart(2, '0')}`;
+        if (answer === expected) {
+            let reward = 5;
+            if (data.boosters.luck) reward = Math.floor(reward * 1.1);
+            data.coins += reward;
+            data.coins_earned_total += reward;
+            saveData();
+            refreshUI();
+            addAchievement('clockMaster');
+            showNotification(`✅ Правильно! +${reward}🪙`, true);
+            playSound('correct');
+        } else {
+            showNotification(`❌ Неправильно! Правильный ответ: ${expected}`, false);
+            playSound('wrong');
+        }
+        setTimeout(() => showScreen('arcade'), 1500);
+    };
+}
+
+// ==================== ИГРА 13: СДАЧА В МАГАЗИНЕ ====================
+function startChangeGame() {
+    showScreen('gameChangeScreen');
+    const price = Math.floor(Math.random() * 90) + 10;
+    const paid = Math.floor(price + Math.random() * 50) + 10;
+    const change = paid - price;
+    const area = document.getElementById('changeArea');
+    area.innerHTML = `<div style="text-align:center;"><div style="font-size:1.5rem;">💰 Покупка стоит ${price}₽</div><div style="font-size:1.5rem;">💵 Ты дал ${paid}₽</div><div style="font-size:1.5rem;">Сколько сдачи?</div><input type="number" id="changeAnswer" style="width:150px; font-size:2rem; text-align:center;"><button id="changeSubmitBtn" style="margin-top:15px;">✅ Проверить</button></div>`;
+    document.getElementById('changeSubmitBtn').onclick = () => {
+        const answer = parseInt(document.getElementById('changeAnswer').value);
+        if (answer === change) {
+            let reward = 3;
+            if (data.boosters.luck) reward = Math.floor(reward * 1.1);
+            data.coins += reward;
+            data.coins_earned_total += reward;
+            saveData();
+            refreshUI();
+            showNotification(`✅ Правильно! +${reward}🪙`, true);
+            playSound('correct');
+        } else {
+            showNotification(`❌ Неправильно! Сдача: ${change}₽`, false);
+            playSound('wrong');
+        }
+        setTimeout(() => showScreen('arcade'), 1500);
+    };
+}
+
+// ==================== УРОКИ ====================
+function generateTask(world, section, maxNum) {
+    if (world === '+') {
+        const a = Math.floor(Math.random() * maxNum) + 1;
+        const b = Math.floor(Math.random() * (maxNum - a)) + 1;
+        return { text: `${a} + ${b}`, answer: a + b };
+    }
+    if (world === '-') {
+        const a = Math.floor(Math.random() * maxNum) + 1;
+        const b = Math.floor(Math.random() * a) + 1;
+        return { text: `${a} - ${b}`, answer: a - b };
+    }
+    if (world === '*') {
+        const a = Math.floor(Math.random() * 10) + 1;
+        const b = Math.floor(Math.random() * 10) + 1;
+        if (a * b <= maxNum) return { text: `${a} × ${b}`, answer: a * b };
+        return generateTask(world, section, maxNum);
+    }
+    if (world === '/') {
+        const b = Math.floor(Math.random() * 10) + 2;
+        const q = Math.floor(Math.random() * 10) + 1;
+        const a = b * q;
+        if (a <= maxNum) return { text: `${a} ÷ ${b}`, answer: q };
+        return generateTask(world, section, maxNum);
+    }
+    if (world === 'compare') {
+        const a = Math.floor(Math.random() * maxNum) + 1;
+        const b = Math.floor(Math.random() * maxNum) + 1;
+        let ans = a < b ? '<' : (a > b ? '>' : '=');
+        return { text: `${a} ? ${b}`, answer: ans };
+    }
+    if (section === 'chain') {
+        const a = Math.floor(Math.random() * (maxNum / 3)) + 1;
+        const b = Math.floor(Math.random() * (maxNum / 3)) + 1;
+        const c = Math.floor(Math.random() * (maxNum / 3)) + 1;
+        return { text: `${a} + ${b} + ${c} = ?`, answer: a + b + c };
+    }
+    if (section === 'neighbors') {
+        const a = Math.floor(Math.random() * (maxNum - 1)) + 2;
+        return { text: `Какое число перед ${a}?`, answer: a - 1 };
+    }
+    if (section === 'truefalse') {
+        const a = Math.floor(Math.random() * maxNum) + 1;
+        const b = Math.floor(Math.random() * maxNum) + 1;
+        const sum = a + b;
+        const correct = Math.random() > 0.3;
+        const wrongSum = sum + Math.floor(Math.random() * 5) + 1;
+        return { text: `${a} + ${b} = ${correct ? sum : wrongSum}? (да/нет)`, answer: correct ? "да" : "нет" };
+    }
+    return { text: "2 + 2", answer: 4 };
+}
+
+function startLesson() {
+    currentStep = 1;
+    currentLives = 3;
+    currentScore = 0;
+    errorCount = 0;
+    hintShown = false;
+    totalSteps = 5;
+    document.getElementById('stepTotal').textContent = totalSteps;
+    document.getElementById('difficultyModal').classList.add('active');
+}
+
+window.setDifficulty = function(diff) {
+    currentDifficulty = diff;
+    document.getElementById('difficultyModal').classList.remove('active');
+    nextTask();
+};
+
+function nextTask() {
+    if (currentStep > totalSteps) {
+        if (currentScore === totalSteps) {
+            let reward = 5;
+            if (data.pet && data.pet.type === 'koala') reward *= 2;
+            if (data.pet && data.pet.type === 'dog') reward *= 2;
+            data.coins += reward;
+            data.coins_earned_total += reward;
+            data.perfect_rounds++;
+            showNotification(`🎉 Идеальный раунд! +${reward}🪙`, true);
+            playSound('coin');
+        }
+        checkAllAchievements();
+        saveData();
+        refreshUI();
+        showScreen('mainMenu');
+        return;
+    }
+    currentTask = generateTask(currentWorld, currentSection, currentDifficulty);
+    document.getElementById('taskText').textContent = currentTask.text;
+    document.getElementById('stepCur').textContent = currentStep;
+    let hearts = '';
+    for (let i = 0; i < currentLives; i++) hearts += '❤️';
+    for (let i = currentLives; i < 3; i++) hearts += '🩶';
+    document.getElementById('livesDisplay').innerHTML = hearts;
+    document.getElementById('answerInput').value = '';
+    document.getElementById('hintArea').style.display = 'none';
+}
+
+function showHint() {
+    if (!currentTask) return;
+    const hint = typeof currentTask.answer === 'number' 
+        ? "💡 Подсказка: посчитай внимательно. Ответ — число."
+        : "💡 Подсказка: выбери знак сравнения или напиши да/нет.";
+    document.getElementById('hintArea').innerHTML = hint;
+    document.getElementById('hintArea').style.display = 'block';
+}
+
+// ==================== НАВИГАЦИЯ И ОСТАЛЬНЫЕ ФУНКЦИИ ====================
+function showScreen(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const target = document.getElementById(screenId);
+    if (target) target.classList.add('active');
+    if (screenId === 'mainMenu') {
+        document.getElementById('robotHeader').style.display = 'flex';
+        document.getElementById('statsHeader').style.display = 'flex';
+        refreshUI();
+    }
+    if (screenId === 'childSelect') {
+        document.getElementById('robotHeader').style.display = 'none';
+        document.getElementById('statsHeader').style.display = 'none';
+        renderChildList();
+    }
+    if (screenId === 'achievements') refreshAchievements();
+    if (screenId === 'daily') renderDailyTasks();
+    if (screenId === 'reference') showRefTab('tab1');
+    if (screenId === 'inventory') renderInventory();
+    if (screenId === 'petScreen') renderPetScreen();
+    if (screenId === 'avatarShop') renderAvatarShop();
+    if (screenId === 'shop') renderShop();
+    if (screenId === 'themesShop') renderThemesShop();
+}
+
+// Магазин
+function renderShop() {
+    const grid = document.getElementById('shopItemsGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    shopGoods.forEach(item => {
+        const btn = document.createElement('button');
+        btn.textContent = `${item.name} (${item.price}🪙) - ${item.desc}`;
+        btn.onclick = () => {
+            if (data.coins >= item.price) {
+                data.coins -= item.price;
+                if (item.id === 'skip') data.skip_token++;
+                if (item.id === 'revive') data.revive_token++;
+                if (item.id === 'multiplier') { data.boosters.multiplier = 2; data.boosters.multiplier_left = 3; }
+                if (item.id === 'shield') data.boosters.shield = true;
+                if (item.id === 'luck') data.boosters.luck = true;
+                if (item.id === 'chest') {
+                    const bonus = Math.floor(Math.random() * 91) + 10;
+                    data.coins += bonus;
+                    data.coins_earned_total += bonus;
+                    showNotification(`🎁 Секретный сундук: +${bonus}🪙!`, true);
+                }
+                data.purchases_count++;
+                data.purchase_log.push({ timestamp: Date.now(), item: item.name, cost: item.price });
+                saveData();
+                refreshUI();
+                renderShop();
+                showNotification(`Куплено: ${item.name}!`, true);
+                playSound('coin');
+                checkAllAchievements();
+                updateDailyTask(2, 1);
+            } else {
+                showNotification('Не хватает монет!', false);
+            }
+        };
+        grid.appendChild(btn);
+    });
+    petsList.forEach(pet => {
+        const btn = document.createElement('button');
+        btn.textContent = `${pet.emoji} ${pet.name} (${pet.price}🪙) - ${pet.abilityDesc}`;
+        btn.onclick = () => {
+            if (data.pet) { showNotification('У тебя уже есть питомец!', false); return; }
+            if (data.coins >= pet.price) {
+                data.coins -= pet.price;
+                data.pet = { type: pet.type, name: pet.name, level: 1, feedCount: 0, petCount: 0, ability: pet.ability };
+                data.purchases_count++;
+                saveData();
+                refreshUI();
+                renderShop();
+                renderPetScreen();
+                showNotification(`Ты купил ${pet.name}!`, true);
+                playSound('coin');
+                checkAllAchievements();
+                document.getElementById('petNameModal').classList.add('active');
+            } else {
+                showNotification('Не хватает монет!', false);
+            }
+        };
+        grid.appendChild(btn);
+    });
+}
+
+function renderThemesShop() {
+    const grid = document.getElementById('themesGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    const themes = [
+        { id: 'ocean', name: '🌊 Морская', price: 20 },
+        { id: 'forest', name: '🌳 Лесная', price: 20 },
+        { id: 'dark', name: '🌑 Тёмная', price: 20 }
+    ];
+    themes.forEach(theme => {
+        const owned = data.owned_themes.includes(theme.id);
+        const btn = document.createElement('button');
+        btn.textContent = `${theme.name} (${theme.price}🪙) ${owned ? '✅ Куплена' : ''}`;
+        btn.disabled = owned;
+        btn.onclick = () => {
+            if (data.coins >= theme.price) {
+                data.coins -= theme.price;
+                data.owned_themes.push(theme.id);
+                saveData();
+                refreshUI();
+                renderThemesShop();
+                showNotification(`Куплена тема "${theme.name}"! Теперь выбери её в настройках`, true);
+                playSound('coin');
+            } else {
+                showNotification('Не хватает монет!', false);
+            }
+        };
+        grid.appendChild(btn);
+    });
+}
+
+function renderAvatarShop() {
+    const grid = document.getElementById('avatarGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    avatarsList.forEach(av => {
+        const owned = data.owned_avatars.includes(av.emoji);
+        const isCurrent = data.current_avatar === av.emoji;
+        const div = document.createElement('div');
+        div.className = `avatar-item ${owned ? 'owned' : ''} ${isCurrent ? 'current' : ''}`;
+        div.innerHTML = `<div style="font-size:2.5rem;">${av.emoji}</div><div>${av.name}</div><div style="font-size:0.8rem;">${av.price === 0 ? 'Стартовый' : av.price + '🪙'}</div>`;
+        div.onclick = () => {
+            if (owned) {
+                data.current_avatar = av.emoji;
+                saveData();
+                updateRobotAvatar();
+                showNotification(`🤖 Теперь ты ${av.name}!`, true);
+                renderAvatarShop();
+            } else if (data.coins >= av.price) {
+                data.coins -= av.price;
+                data.owned_avatars.push(av.emoji);
+                data.current_avatar = av.emoji;
+                saveData();
+                updateRobotAvatar();
+                refreshUI();
+                showNotification(`🎉 Ты купил ${av.name}!`, true);
+                playSound('coin');
+                renderAvatarShop();
+            } else {
+                showNotification('Не хватает монет!', false);
+            }
+        };
+        grid.appendChild(div);
+    });
+}
+
+function renderInventory() {
+    const inv = document.getElementById('inventoryList');
+    if (!inv) return;
+    let html = '<div style="display:flex; flex-wrap:wrap; gap:10px;">';
+    if (data.skip_token > 0) html += `<div class="achievement-badge">⤴️ Пропуски: ${data.skip_token}</div>`;
+    if (data.revive_token > 0) html += `<div class="achievement-badge">♻️ Воскрешения: ${data.revive_token}</div>`;
+    if (data.boosters.multiplier > 0 && data.boosters.multiplier_left > 0) html += `<div class="achievement-badge">⚡ Удвоитель: ${data.boosters.multiplier_left} задач</div>`;
+    if (data.boosters.shield) html += `<div class="achievement-badge">🛡️ Защита активна</div>`;
+    if (data.boosters.luck) html += `<div class="achievement-badge">🍀 Талисман удачи</div>`;
+    if (data.pet) html += `<div class="achievement-badge">🐾 Питомец: ${data.pet.name} (ур.${data.pet.level || 1})</div>`;
+    html += '</div>';
+    inv.innerHTML = html;
+}
+
+function renderPetScreen() {
+    const d = document.getElementById('petDisplay');
+    if (!d) return;
+    if (!data.pet) {
+        d.innerHTML = `<div class="pet-card"><p>😢 Нет питомца. Купи в магазине!</p></div>`;
+        return;
+    }
+    const emoji = { dog: '🐕', cat: '🐈', hamster: '🐹', fox: '🦊', penguin: '🐧', koala: '🐨' }[data.pet.type] || '🐾';
+    const abilityDesc = petsList.find(p => p.type === data.pet.type)?.abilityDesc || '';
+    d.innerHTML = `
+        <div class="pet-card">
+            <div style="font-size:5rem;">${emoji}</div>
+            <h3>${data.pet.name}</h3>
+            <div>Уровень: ${data.pet.level || 1}</div>
+            <div>🍖 Кормёжек: ${data.pet.feedCount || 0}</div>
+            <div>🤗 Поглаживаний: ${data.pet.petCount || 0}</div>
+            <div style="background:#fff0b5; border-radius:20px; padding:10px; margin-top:10px;">✨ Способность: ${abilityDesc}</div>
+            <div style="margin-top:15px;">
+                <button id="feedPetBtn">🍖 Кормить (5🪙)</button>
+                <button id="petPetBtn">🤗 Гладить</button>
+                <button id="renamePetBtn">✏️ Переименовать</button>
+            </div>
+        </div>
+    `;
+    document.getElementById('feedPetBtn')?.addEventListener('click', () => {
+        if (data.coins >= 5) {
+            data.coins -= 5;
+            data.pet.feedCount = (data.pet.feedCount || 0) + 1;
+            data.pet.level = Math.floor(data.pet.feedCount / 3) + 1;
+            saveData();
+            refreshUI();
+            renderPetScreen();
+            showNotification("🍖 Питомец сыт!", true);
+            playSound('coin');
+            checkAllAchievements();
+        } else {
+            showNotification('Не хватает монет!', false);
+        }
+    });
+    document.getElementById('petPetBtn')?.addEventListener('click', () => {
+        data.pet.petCount = (data.pet.petCount || 0) + 1;
+        saveData();
+        showNotification("🤗 Питомец рад!", true);
+        playSound('move');
+        renderPetScreen();
+    });
+    document.getElementById('renamePetBtn')?.addEventListener('click', () => {
+        document.getElementById('petNameInput').value = data.pet.name || '';
+        document.getElementById('petNameModal').classList.add('active');
+    });
+}
+
+function showRefTab(tabId) {
+    let content = '';
+    if (tabId === 'tab1') content = '<h3>➕ Сложение</h3><p>Сложение — это объединение чисел. Например, 5 + 3 = 8.</p>';
+    else if (tabId === 'tab2') content = '<h3>➖ Вычитание</h3><p>Вычитание — это нахождение разности. Например, 8 - 3 = 5.</p>';
+    else if (tabId === 'tab3') {
+        content = '<h3>✖️ Таблица умножения</h3><div style="overflow-x:auto;"><table style="margin:auto; border-collapse:collapse;">';
+        for (let i = 1; i <= 9; i++) {
+            content += '<tr>';
+            for (let j = 1; j <= 9; j++) {
+                content += `<td style="border:1px solid #ccc; padding:8px; text-align:center;">${i}×${j}=${i*j}</td>`;
+            }
+            content += '</tr>';
+        }
+        content += '</table></div>';
+    }
+    else if (tabId === 'tab4') content = '<h3>➗ Деление</h3><p>Деление — это разбиение на равные части. 12 ÷ 3 = 4.</p>';
+    else if (tabId === 'tab5') content = '<h3>🍕 Дроби</h3><p>Дроби показывают часть от целого. 1/2 — это половина.</p>';
+    else if (tabId === 'tab6') content = '<h3>🕰️ Время</h3><p>1 час = 60 минут, 1 сутки = 24 часа</p>';
+    else if (tabId === 'tab7') content = '<h3>📏 Единицы измерения</h3><p>1 м = 100 см, 1 кг = 1000 г, 1 л = 1000 мл</p>';
+    else if (tabId === 'tab8') content = '<h3>💰 Деньги</h3><p>Монеты: 1₽, 2₽, 5₽, 10₽. Купюры: 50₽, 100₽, 500₽, 1000₽</p>';
+    else if (tabId === 'tab9') {
+        content = '<h3>❌ Мои ошибки</h3>';
+        if (data.mistakes.length === 0) content += '<p>✨ Пока нет ошибок! Так держать!</p>';
+        else {
+            data.mistakes.slice(0, 10).forEach(m => {
+                content += `<div style="background:#ffe0b5; border-radius:20px; padding:10px; margin:10px 0;"><strong>${m.date}</strong><br>📝 ${m.question}<br>❌ Твой ответ: ${m.userAnswer}<br>✅ Правильно: ${m.correctAnswer}</div>`;
+            });
+        }
+    }
+    document.getElementById('refContent').innerHTML = content;
+}
+
+function checkDailyTasks() {
+    const today = new Date().toDateString();
+    if (data.last_daily_date !== today) {
+        data.daily_tasks = [
+            { desc: "Реши 5 примеров", target: 5, progress: 0, reward: 10, done: false },
+            { desc: "Выиграй в игре", target: 1, progress: 0, reward: 5, done: false },
+            { desc: "Купи в магазине", target: 1, progress: 0, reward: 8, done: false }
+        ];
+        data.last_daily_date = today;
+        saveData();
+    }
+}
+
+function renderDailyTasks() {
+    const c = document.getElementById('dailyTasksList');
+    if (!c) return;
+    c.innerHTML = '';
+    (data.daily_tasks || []).forEach(t => {
+        c.innerHTML += `<div class="daily-task ${t.done ? 'done' : ''}"><span>${t.desc} (${t.progress}/${t.target})</span><span>+${t.reward}🪙</span></div>`;
+    });
+}
+
+function updateDailyTask(idx, inc = 1) {
+    if (data.daily_tasks && data.daily_tasks[idx] && !data.daily_tasks[idx].done) {
+        data.daily_tasks[idx].progress += inc;
+        if (data.daily_tasks[idx].progress >= data.daily_tasks[idx].target) {
+            data.daily_tasks[idx].done = true;
+            let reward = data.daily_tasks[idx].reward;
+            if (data.boosters.luck) reward = Math.floor(reward * 1.1);
+            data.coins += reward;
+            data.coins_earned_total += reward;
+            showNotification(`Задание выполнено! +${reward}🪙`, true);
+            playSound('coin');
+            saveData();
+            refreshUI();
+        }
+    }
+}
+
+function checkDailyBonus() {
+    const today = new Date().toDateString();
+    if (data.last_login_date !== today) {
+        const yesterday = new Date(Date.now() - 86400000).toDateString();
+        if (data.last_login_date === yesterday) data.login_streak = (data.login_streak || 0) + 1;
+        else data.login_streak = 1;
+        let bonus = 5 + Math.min(data.login_streak, 7) * 2;
+        if (data.pet && data.pet.type === 'fox') bonus += 1;
+        if (data.pet && data.pet.type === 'penguin' && new Date().getDay() === 1) bonus += 5;
+        data.coins += bonus;
+        data.coins_earned_total += bonus;
+        showNotification(`🎁 Ежедневный бонус! +${bonus}🪙 (день ${data.login_streak})`, true);
+        playSound('coin');
+        data.last_login_date = today;
+        saveData();
+        updateStatsUI();
+        checkAllAchievements();
+    }
+}
+
+function updateDailyProgress() {
+    const today = new Date().toDateString();
+    const existing = data.daily_stats.find(d => d.date === today);
+    if (existing) existing.solved = data.total_solved;
+    else data.daily_stats.push({ date: today, solved: data.total_solved });
+    if (data.daily_stats.length > 30) data.daily_stats = data.daily_stats.slice(-30);
+    saveData();
+}
+
+function updateStatsUI() {
+    document.getElementById('achCount').textContent = data.achievements.length;
+    document.getElementById('coinCount').textContent = data.coins;
+    document.getElementById('solvedCount').textContent = data.total_solved;
+    document.getElementById('streakCount').textContent = data.login_streak || 0;
+    if (document.getElementById('shopCoins')) document.getElementById('shopCoins').textContent = data.coins;
+    if (document.getElementById('avatarCoins')) document.getElementById('avatarCoins').textContent = data.coins;
+    if (document.getElementById('themesCoins')) document.getElementById('themesCoins').textContent = data.coins;
+}
+
+function refreshUI() {
+    updateStatsUI();
+    renderDailyTasks();
+    refreshAchievements();
+    renderInventory();
+    renderPetScreen();
+}
+
+function updateRobotAvatar() {
+    document.getElementById('robotAvatar').textContent = data.current_avatar || "🤖";
+}
+
+function applyTheme(theme) {
+    document.body.classList.remove('theme-dark', 'theme-forest', 'theme-ocean');
+    if (theme === 'ocean') document.body.classList.add('theme-ocean');
+    else if (theme === 'forest') document.body.classList.add('theme-forest');
+    else if (theme === 'dark') document.body.classList.add('theme-dark');
+    data.skin_theme = theme;
+    saveData();
+}
+
+function renderChildManagement() {
+    const c = document.getElementById('childManagement');
+    if (!c) return;
+    c.innerHTML = '';
+    childrenList.forEach(name => {
+        const div = document.createElement('div');
+        div.style.cssText = 'background:#ffefc0; border-radius:30px; padding:10px; margin:5px; display:inline-block;';
+        div.innerHTML = `<strong>${name}</strong> <button class="delChildBtn" data-name="${name}">❌</button>`;
+        c.appendChild(div);
+    });
+    document.querySelectorAll('.delChildBtn').forEach(btn => {
+        btn.onclick = (e) => {
+            const name = e.target.dataset.name;
+            if (confirm(`Удалить ${name}?`)) {
+                childrenList = childrenList.filter(n => n !== name);
+                saveChildrenList();
+                localStorage.removeItem('math_academy_child_' + name);
+                if (childrenList.length === 0) {
+                    childrenList = ['Ученик'];
+                    saveChildrenList();
+                    resetData();
+                    saveChildData('Ученик', data);
+                }
+                renderChildManagement();
+                renderParentChildSelector();
+                if (currentChild === name) {
+                    currentChild = childrenList[0];
+                    loadChildData(currentChild);
+                    refreshUI();
+                }
+                showNotification('Профиль удалён', false);
+            }
+        };
+    });
+}
+
+function renderParentChildSelector() {
+    const sel = document.getElementById('parentChildSelector');
+    if (!sel) return;
+    sel.innerHTML = '';
+    childrenList.forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        sel.appendChild(opt);
+    });
+    if (childrenList.length) renderChildStats(childrenList[0]);
+}
+
+function renderChildStats(childName) {
+    const saved = localStorage.getItem('math_academy_child_' + childName);
+    const cd = saved ? JSON.parse(saved) : data;
+    const spent = (cd.purchase_log || []).reduce((a, p) => a + p.cost, 0);
+    let html = `<div style="background:#fff7e6; border-radius:30px; padding:20px;">`;
+    html += `<div class="stat-row"><span class="stat-label">📚 Решено задач:</span><span>${cd.total_solved || 0}</span></div>`;
+    html += `<div class="stat-row"><span class="stat-label">🪙 Монет:</span><span>${cd.coins || 0}</span></div>`;
+    html += `<div class="stat-row"><span class="stat-label">💰 Заработано всего:</span><span>${cd.coins_earned_total || 0}</span></div>`;
+    html += `<div class="stat-row"><span class="stat-label">💸 Потрачено:</span><span>${spent}</span></div>`;
+    html += `<div class="stat-row"><span class="stat-label">🎯 Идеальных раундов:</span><span>${cd.perfect_rounds || 0}</span></div>`;
+    html += `<div class="stat-row"><span class="stat-label">🔥 Серия входов:</span><span>${cd.login_streak || 0} дней</span></div>`;
+    html += `<div class="stat-row"><span class="stat-label">⤴️ Пропуски:</span><span>${cd.skip_token || 0}</span></div>`;
+    html += `<div class="stat-row"><span class="stat-label">♻️ Воскрешения:</span><span>${cd.revive_token || 0}</span></div>`;
+    html += `<div class="stat-row"><span class="stat-label">🏆 Награды:</span><span>${cd.achievements?.length || 0}</span></div>`;
+    html += `<div class="stat-row"><span class="stat-label">🐾 Питомец:</span><span>${cd.pet ? `${cd.pet.name} (${cd.pet.type})` : '—'}</span></div>`;
+    html += `<div class="stat-row"><span class="stat-label">🛍️ Всего покупок:</span><span>${cd.purchases_count || 0}</span></div>`;
+    html += `<h4 style="margin-top:20px;">📊 Прогресс по дням:</h4><div style="display:flex; gap:5px; flex-wrap:wrap;">`;
+    const stats = cd.daily_stats || [];
+    const last7 = stats.slice(-7);
+    last7.forEach(day => {
+        const height = Math.min(50, (day.solved / 100) * 50);
+        html += `<div style="text-align:center;"><div style="width:30px; height:${height || 5}px; background:#4caf50; border-radius:5px;"></div><div style="font-size:10px;">${day.date.slice(0, 5)}</div><div>${day.solved}</div></div>`;
+    });
+    html += '</div></div>';
+    document.getElementById('childStatsFull').innerHTML = html;
+    document.getElementById('pcEarned').textContent = cd.coins_earned_total || 0;
+    document.getElementById('pcSpent').textContent = spent;
+    document.getElementById('pcTimeLimit').value = cd.daily_play_limit || 0;
+}
+
+function loadChildrenList() {
+    const saved = localStorage.getItem('math_academy_children');
+    childrenList = saved ? JSON.parse(saved) : ['Ученик'];
+}
+
+function saveChildrenList() {
+    localStorage.setItem('math_academy_children', JSON.stringify(childrenList));
+}
+
+function resetData() {
+    data = {
+        total_solved: 0, achievements: [], coins: 0, coins_earned_total: 0,
+        purchases_count: 0, skip_token: 0, revive_token: 0, perfect_rounds: 0,
+        skin_theme: "default", daily_tasks: [], last_daily_date: "", last_login_date: "",
+        login_streak: 0, passwordHash: "", pet: null, purchase_log: [],
+        lesson_log: [], current_avatar: "🤖", owned_avatars: ["🤖"], owned_themes: ["default"],
+        daily_stats: [], mistakes: [], boosters: { multiplier: 0, multiplier_left: 0, shield: false, luck: false },
+        games_unlocked: 0
+    };
+}
+
+function loadChildData(name) {
+    const saved = localStorage.getItem('math_academy_child_' + name);
+    if (saved) {
+        const loaded = JSON.parse(saved);
+        for (let key in data) if (loaded[key] !== undefined) data[key] = loaded[key];
+    } else {
+        resetData();
+    }
+    if (!data.owned_avatars) data.owned_avatars = ["🤖"];
+    if (!data.current_avatar) data.current_avatar = "🤖";
+    if (!data.owned_themes) data.owned_themes = ["default"];
+    if (!data.daily_stats) data.daily_stats = [];
+    if (!data.mistakes) data.mistakes = [];
+    if (!data.boosters) data.boosters = { multiplier: 0, multiplier_left: 0, shield: false, luck: false };
+    checkDailyBonus();
+    checkDailyTasks();
+    applyTheme(data.skin_theme);
+}
+
+function saveChildData(name, d) {
+    localStorage.setItem('math_academy_child_' + name, JSON.stringify(d));
+}
+
+function saveData() {
+    if (currentChild) saveChildData(currentChild, data);
+}
+
+function renderChildList() {
+    const c = document.getElementById('childList');
+    if (!c) return;
+    c.innerHTML = '';
+    childrenList.forEach(name => {
+        const btn = document.createElement('div');
+        btn.className = 'child-card';
+        btn.textContent = name;
+        btn.onclick = () => promptChildPassword(name);
+        c.appendChild(btn);
+    });
+}
+
+let pendingChild = null;
+
+function promptChildPassword(name) {
+    pendingChild = name;
+    document.getElementById('childLoginModal').classList.add('active');
+}
+
+function enterChildMode(name) {
+    currentChild = name;
+    loadChildData(name);
+    refreshUI();
+    updateRobotAvatar();
+    showScreen('mainMenu');
+}
+
+function loadMasterPassword() {
+    const saved = localStorage.getItem('math_academy_master_password');
+    masterPasswordHash = saved || hashPassword('0000');
+    if (!saved) localStorage.setItem('math_academy_master_password', masterPasswordHash);
+}
+
+function setMasterPassword(pwd) {
+    masterPasswordHash = hashPassword(pwd);
+    localStorage.setItem('math_academy_master_password', masterPasswordHash);
+}
+
+function verifyMasterPassword(input) {
+    return verifyPassword(input, masterPasswordHash);
+}
+
+// ==================== ИНИЦИАЛИЗАЦИЯ ====================
+function init() {
+    loadMasterPassword();
+    loadChildrenList();
+    renderChildList();
+    
+    document.getElementById('addNewChildBtn').onclick = () => document.getElementById('newChildModal').classList.add('active');
+    document.getElementById('parentAccessBtn').onclick = () => showScreen('parent');
+    document.getElementById('switchChildBtn').onclick = () => {
+        document.getElementById('robotHeader').style.display = 'none';
+        document.getElementById('statsHeader').style.display = 'none';
+        showScreen('childSelect');
+    };
+    document.getElementById('exitBtn').onclick = () => { if (confirm('Закрыть игру?')) window.close(); };
+    
+    document.getElementById('submitChildPwdBtn').onclick = () => {
+        const pwd = document.getElementById('childPwdInput').value;
+        if (!pendingChild) return;
+        const saved = localStorage.getItem('math_academy_child_' + pendingChild);
+        if (saved) {
+            const cd = JSON.parse(saved);
+            if (verifyPassword(pwd, cd.passwordHash || hashPassword(''))) {
+                enterChildMode(pendingChild);
+            } else {
+                showNotification('Неверный пароль', false);
+            }
+        } else {
+            resetData();
+            data.passwordHash = hashPassword(pwd);
+            saveChildData(pendingChild, data);
+            enterChildMode(pendingChild);
+        }
+        document.getElementById('childLoginModal').classList.remove('active');
+    };
+    
+    document.getElementById('cancelChildLoginBtn').onclick = () => {
+        document.getElementById('childLoginModal').classList.remove('active');
+        pendingChild = null;
+    };
+    
+    document.getElementById('createChildBtn').onclick = () => {
+        const name = document.getElementById('newChildName').value.trim();
+        const pwd = document.getElementById('newChildPwd').value;
+        if (!name) { showNotification('Введите имя', false); return; }
+        if (childrenList.includes(name)) { showNotification('Такое имя уже есть', false); return; }
+        childrenList.push(name);
+        saveChildrenList();
+        resetData();
+        data.passwordHash = hashPassword(pwd);
+        data.owned_avatars = ["🤖"];
+        data.current_avatar = "🤖";
+        data.owned_themes = ["default"];
+        saveChildData(name, data);
+        renderChildList();
+        document.getElementById('newChildModal').classList.remove('active');
+        showNotification(`Ребёнок ${name} создан`, true);
+    };
+    
+    document.getElementById('cancelNewChildBtn').onclick = () => document.getElementById('newChildModal').classList.remove('active');
+    
+    document.getElementById('enterParentBtn').onclick = () => {
+        const pwd = document.getElementById('parentPwd').value;
+        if (verifyMasterPassword(pwd)) {
+            document.getElementById('parentLoginArea').style.display = 'none';
+            document.getElementById('parentPanel').style.display = 'block';
+            renderChildManagement();
+            renderParentChildSelector();
+            showNotification('Добро пожаловать, родитель!', true);
+            playSound('achievement');
+        } else {
+            showNotification('Неверный пароль', false);
+        }
+    };
+    
+    document.getElementById('addChildFromParentBtn').onclick = () => document.getElementById('newChildModal').classList.add('active');
+    document.getElementById('parentChildSelector').onchange = (e) => renderChildStats(e.target.value);
+    document.getElementById('pcSetLimitBtn').onclick = () => {
+        const limit = parseInt(document.getElementById('pcTimeLimit').value);
+        if (!isNaN(limit)) {
+            data.daily_play_limit = limit;
+            saveData();
+            showNotification('Лимит установлен', true);
+        }
+    };
+    document.getElementById('changeMasterPwdBtn').onclick = () => {
+        const np = prompt("Новый мастер-пароль:");
+        if (np) setMasterPassword(np);
+        showNotification("Пароль изменён", true);
+    };
+    document.getElementById('parentLogoutBtn').onclick = () => {
+        document.getElementById('parentLoginArea').style.display = 'block';
+        document.getElementById('parentPanel').style.display = 'none';
+        showScreen('mainMenu');
+    };
+    
+    document.querySelectorAll('[data-screen]').forEach(btn => {
+        btn.onclick = () => showScreen(btn.dataset.screen);
+    });
+    document.querySelectorAll('[data-back]').forEach(btn => {
+        btn.onclick = () => showScreen(btn.dataset.back);
+    });
+    document.querySelectorAll('[data-world]').forEach(btn => {
+        btn.onclick = () => {
+            currentWorld = btn.dataset.world;
+            currentSection = 'standard';
+            if (currentWorld === 'compare') currentSection = 'compare';
+            showScreen('lessonScreen');
+            startLesson();
+        };
+    });
+    document.querySelectorAll('[data-section]').forEach(btn => {
+        btn.onclick = () => {
+            currentSection = btn.dataset.section;
+            showScreen('lessonScreen');
+            startLesson();
+        };
+    });
+    
+    document.getElementById('submitAnswer').onclick = () => {
+        const userAnswer = document.getElementById('answerInput').value.trim().toLowerCase();
+        let correct = false;
+        if (typeof currentTask?.answer === 'number') {
+            const num = parseInt(userAnswer);
+            if (!isNaN(num) && num === currentTask.answer) correct = true;
+        } else {
+            if (userAnswer === currentTask?.answer.toString().toLowerCase()) correct = true;
+        }
+        if (correct) {
+            playSound('correct');
+            showNotification('✅ Правильно!', true);
+            currentScore++;
+            data.total_solved++;
+            let reward = 1;
+            if (data.boosters.multiplier > 0 && data.boosters.multiplier_left > 0) {
+                reward *= data.boosters.multiplier;
+                data.boosters.multiplier_left--;
+                if (data.boosters.multiplier_left === 0) data.boosters.multiplier = 0;
+            }
+            if (data.boosters.luck) reward = Math.floor(reward * 1.1);
+            data.coins += reward;
+            data.coins_earned_total += reward;
+            currentStep++;
+            errorCount = 0;
+            hintShown = false;
+            updateDailyTask(0, 1);
+            updateDailyProgress();
+            nextTask();
+        } else {
+            playSound('wrong');
+            showNotification('❌ Неправильно', false);
+            currentLives--;
+            errorCount++;
+            if (currentTask) {
+                data.mistakes.unshift({ date: new Date().toLocaleString(), question: currentTask.text, userAnswer: userAnswer, correctAnswer: currentTask.answer });
+                if (data.mistakes.length > 20) data.mistakes.pop();
+            }
+            if (errorCount >= 2 && !hintShown) {
+                showHint();
+                hintShown = true;
+            }
+            if (currentLives <= 0) {
+                if (data.revive_token > 0) {
+                    data.revive_token--;
+                    currentLives = 3;
+                    showNotification('♻️ Воскрешён!', true);
+                } else {
+                    showNotification('😢 Ты проиграл...', false);
+                    playSound('gameover');
+                    saveData();
+                    showScreen('mainMenu');
+                    return;
+                }
+            }
+            let hearts = '';
+            for (let i = 0; i < currentLives; i++) hearts += '❤️';
+            for (let i = currentLives; i < 3; i++) hearts += '🩶';
+            document.getElementById('livesDisplay').innerHTML = hearts;
+        }
+        saveData();
+        refreshUI();
+        checkAllAchievements();
+    };
+    
+    document.getElementById('skipLesson').onclick = () => {
+        if (data.skip_token > 0) {
+            data.skip_token--;
+            currentStep++;
+            showNotification('⏭️ Пропуск', true);
+            playSound('move');
+            nextTask();
+            saveData();
+            refreshUI();
+        } else {
+            showNotification('Нет пропусков', false);
+        }
+    };
+    document.getElementById('quitLesson').onclick = () => showScreen('mainMenu');
+    
+    document.getElementById('diffEasy').onclick = () => setDifficulty(10);
+    document.getElementById('diffMedium').onclick = () => setDifficulty(50);
+    document.getElementById('diffHard').onclick = () => setDifficulty(100);
+    document.getElementById('cancelDifficulty').onclick = () => document.getElementById('difficultyModal').classList.remove('active');
+    
+    document.getElementById('showMaze').onclick = startMazeGame;
+    document.getElementById('showWord').onclick = startWordGame;
+    document.getElementById('showCheckers').onclick = startCheckers;
+    document.getElementById('showTicTac').onclick = startTicTac;
+    document.getElementById('showMemory').onclick = startMemoryGame;
+    document.getElementById('showBattleship').onclick = startBattleship;
+    document.getElementById('showSudoku').onclick = startSudoku;
+    document.getElementById('showShootGame').onclick = startShootGame;
+    document.getElementById('showCompareFast').onclick = startCompareFast;
+    document.getElementById('showFingerCount').onclick = startFingerCount;
+    document.getElementById('showNumberComposition').onclick = startNumberComposition;
+    document.getElementById('showClockGame').onclick = startClockGame;
+    document.getElementById('showChangeGame').onclick = startChangeGame;
+    document.getElementById('showPet').onclick = () => { showScreen('petScreen'); renderPetScreen(); };
+    
+    document.getElementById('shopBuyBtn').onclick = () => { showScreen('shop'); renderShop(); };
+    document.getElementById('shopInventoryBtn').onclick = () => { showScreen('inventory'); renderInventory(); };
+    document.getElementById('shopAvatarBtn').onclick = () => { showScreen('avatarShop'); renderAvatarShop(); };
+    document.getElementById('shopThemesBtn').onclick = () => { showScreen('themesShop'); renderThemesShop(); };
+    
+    document.getElementById('petNameSaveBtn').onclick = () => {
+        const newName = document.getElementById('petNameInput').value.trim();
+        if (newName && data.pet) {
+            data.pet.name = newName;
+            saveData();
+            showNotification('Имя сохранено', true);
+            document.getElementById('petNameModal').classList.remove('active');
+            renderPetScreen();
+        }
+    };
+    document.getElementById('petNameCancelBtn').onclick = () => document.getElementById('petNameModal').classList.remove('active');
+    document.getElementById('closeAchievementDescBtn').onclick = () => document.getElementById('achievementDescModal').classList.remove('active');
+    
+    document.querySelectorAll('.ref-tab').forEach(tab => {
+        tab.onclick = () => showRefTab(tab.dataset.ref);
+    });
+    
+    const musicToggle = document.getElementById('musicToggle');
+    const themeSelect = document.getElementById('themeSelect');
+    const voiceToggle = document.getElementById('voiceToggle');
+    if (musicToggle) musicToggle.onchange = (e) => { musicEnabled = e.target.checked; };
+    if (voiceToggle) voiceToggle.onchange = (e) => { voiceEnabled = e.target.checked; };
+    if (themeSelect) {
+        themeSelect.value = data.skin_theme || 'default';
+        themeSelect.onchange = (e) => {
+            if (data.owned_themes.includes(e.target.value) || e.target.value === 'default') {
+                applyTheme(e.target.value);
+                showNotification(`Тема изменена`, true);
+            } else {
+                showNotification('Сначала купи эту тему в магазине!', false);
+                themeSelect.value = data.skin_theme;
+            }
+        };
+    }
+    
+    if (childrenList.length) {
+        showScreen('childSelect');
+    } else {
+        resetData();
+        data.owned_avatars = ["🤖"];
+        data.current_avatar = "🤖";
+        data.owned_themes = ["default"];
+        saveChildData('Ученик', data);
+        childrenList = ['Ученик'];
+        saveChildrenList();
+        renderChildList();
+        showScreen('childSelect');
+    }
+    
+    document.addEventListener('click', function initAudioOnce() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        audioCtx.resume();
+        document.removeEventListener('click', initAudioOnce);
+    });
+}
+
+window.onload = init;
+</script>
+</body>
+</html>

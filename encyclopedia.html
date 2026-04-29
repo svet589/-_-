@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Энциклопедия Маленького Эрудита — Пробник v2</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Comic Neue', 'Segoe UI', Roboto, cursive, sans-serif;
+            background: radial-gradient(circle at 20% 20%, #f9d56e, #f8b042);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+        }
+        .encyclopedia-container {
+            max-width: 850px;
+            width: 100%;
+            background: rgba(255,255,255,0.95);
+            border-radius: 40px;
+            padding: 25px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3), 0 0 0 8px #fcdb8b inset;
+            border: 5px solid #ffb347;
+        }
+        h1 {
+            text-align: center;
+            color: #2d4059;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        .search-box {
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            border: 3px solid #ffb347;
+            background: #fff7e6;
+            text-align: center;
+            margin: 15px 0;
+            font-family: inherit;
+        }
+        .tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+        .tab {
+            background: #fff7e6;
+            padding: 15px 25px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+            border: 3px solid #d4a259;
+            font-family: inherit;
+            box-shadow: 0 4px 0 #b47c2e;
+        }
+        .tab:hover {
+            background: #ffe0b0;
+            transform: translateY(-2px);
+        }
+        .tab:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #b47c2e;
+        }
+        
+        /* ЭКРАН РАЗДЕЛА */
+        .section-screen {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: radial-gradient(circle at 20% 20%, #f9d56e, #f8b042);
+            z-index: 100;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .section-screen.active {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        .section-content {
+            max-width: 850px;
+            width: 100%;
+            background: rgba(255,255,255,0.95);
+            border-radius: 40px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3), 0 0 0 8px #fcdb8b inset;
+            border: 5px solid #ffb347;
+            margin: 20px 0;
+        }
+        .back-btn {
+            background: #b3c7e5;
+            border: none;
+            border-radius: 40px;
+            padding: 12px 25px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #2d4059;
+            box-shadow: 0 5px 0 #6b7f9c;
+            cursor: pointer;
+            transition: 0.1s;
+            font-family: inherit;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+        .back-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #6b7f9c;
+        }
+        .section-header {
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 25px;
+            color: #2d4059;
+        }
+        .block {
+            margin: 20px 0;
+            border: 3px solid #ffb347;
+            border-radius: 25px;
+            overflow: hidden;
+            background: white;
+        }
+        .block-title {
+            background: #ffd966;
+            padding: 15px 25px;
+            font-weight: bold;
+            font-size: 1.3rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+        .block-title:hover { background: #ffe08a; }
+        .block-body {
+            padding: 25px;
+            display: block;
+            line-height: 1.8;
+            font-size: 1.05rem;
+        }
+        .fact-card {
+            background: #fff3cd;
+            border-radius: 20px;
+            padding: 20px;
+            margin: 15px 0;
+            border-left: 8px solid #ff9800;
+        }
+        .fact-title {
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 1rem;
+        }
+        th {
+            background: #ffd966;
+            padding: 12px;
+            border: 2px solid #d4a259;
+            font-size: 1rem;
+        }
+        td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        tr:nth-child(even) td { background: #fff9e6; }
+        .badge-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 12px;
+        }
+        .badge-item {
+            background: #ffe0b0;
+            border-radius: 20px;
+            padding: 15px;
+            text-align: center;
+            border: 2px solid #d4a259;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+        .alphabet-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
+            gap: 10px;
+            text-align: center;
+        }
+        .alphabet-letter {
+            background: #ffe0b0;
+            border-radius: 20px;
+            padding: 12px;
+            font-size: 1.6rem;
+            font-weight: bold;
+            border: 2px solid #d4a259;
+        }
+        .search-results {
+            text-align: center;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #fff3cd;
+            border-radius: 20px;
+        }
+        @media (max-width: 600px) {
+            .section-content { padding: 20px 15px; }
+            .tab { padding: 12px 18px; font-size: 0.9rem; }
+            .section-header { font-size: 1.5rem; }
+            .block-body { padding: 15px; font-size: 0.95rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ГЛАВНЫЙ ЭКРАН ЭНЦИКЛОПЕДИИ -->
+<div class="encyclopedia-container" id="mainScreen">
+    <h1>📖 Энциклопедия Маленького Эрудита</h1>
+    <p style="text-align:center; color:#5a2d0c; margin-bottom:5px;">Здесь собраны все знания начальной школы и даже больше!</p>
+    
+    <input type="text" class="search-box" id="searchInput" placeholder="🔍 Найди что-нибудь интересное...">
+    
+    <div class="tabs">
+        <button class="tab" onclick="openSection('math')">📐 Математика</button>
+        <button class="tab" onclick="openSection('russian')">📖 Русский язык</button>
+        <button class="tab" onclick="openSection('english')">🇬🇧 Английский язык</button>
+        <button class="tab" onclick="openSection('world')">🌍 Окружающий мир</button>
+        <button class="tab" onclick="openSection('facts')">🤯 Удивительные факты</button>
+    </div>
+    
+    <p style="text-align:center; color:#888; margin-top:20px;">👆 Выбери раздел — он откроется на весь экран, и читать будет удобно!</p>
+</div>
+
+<!-- ЭКРАНЫ РАЗДЕЛОВ (генерируются через JS) -->
+<div id="sectionScreen" class="section-screen">
+    <div class="section-content" id="sectionContent"></div>
+</div>
+
+<script>
+// ==================== ДАННЫЕ ЭНЦИКЛОПЕДИИ ====================
+const ENCYCLOPEDIA = {
+    math: {
+        title: '📐 Математика',
+        blocks: [
+            {
+                title: '📊 Таблица умножения',
+                content: `
+                    <div style="overflow-x:auto;">
+                        <table>
+                            <tr><th>×</th>${Array.from({length:9}, (_,i) => `<th>${i+1}</th>`).join('')}</tr>
+                            ${Array.from({length:9}, (_,i) => `
+                                <tr>
+                                    <th>${i+1}</th>
+                                    ${Array.from({length:9}, (_,j) => `<td${i===j?' style="background:#fff3cd;font-weight:bold;"':''}>${(i+1)*(j+1)}</td>`).join('')}
+                                </tr>
+                            `).join('')}
+                        </table>
+                    </div>
+                    <p style="margin-top:15px;font-size:1.1rem;">💡 <strong>Лайфхак:</strong> Умножение на 9 — загни пальцы! 9×7: загибаем 7-й палец, слева 6, справа 3 → 63.</p>
+                    <p>💡 Умножение на 5: число чётное → делим на 2 и дописываем 0 (5×8=40). Нечётное → (число-1)/2 и дописываем 5 (5×7=35).</p>
+                `
+            },
+            {
+                title: '📏 Меры длины, веса, объёма',
+                content: `
+                    <div class="badge-grid">
+                        <div class="badge-item">📌 1 см = 10 мм</div>
+                        <div class="badge-item">📌 1 дм = 10 см</div>
+                        <div class="badge-item">📌 1 м = 100 см</div>
+                        <div class="badge-item">📌 1 км = 1000 м</div>
+                        <div class="badge-item">⚖️ 1 кг = 1000 г</div>
+                        <div class="badge-item">⚖️ 1 ц = 100 кг</div>
+                        <div class="badge-item">⚖️ 1 т = 1000 кг</div>
+                        <div class="badge-item">💧 1 л = 1000 мл</div>
+                    </div>
+                    <p style="margin-top:15px;">🐜 <strong>Примеры из жизни:</strong> Муравей ~ 5 мм | Карандаш ~ 15 см | Дверь ~ 2 м | Яблоко ~ 200 г | Слон ~ 5 т</p>
+                `
+            },
+            {
+                title: '🔢 Римские цифры',
+                content: `
+                    <div style="text-align:center;font-size:2rem;display:flex;gap:15px;justify-content:center;flex-wrap:wrap;line-height:2;">
+                        <span>Ⅰ=1</span><span>Ⅱ=2</span><span>Ⅲ=3</span><span>Ⅳ=4</span><span>Ⅴ=5</span>
+                        <span>Ⅵ=6</span><span>Ⅶ=7</span><span>Ⅷ=8</span><span>Ⅸ=9</span><span>Ⅹ=10</span>
+                        <span>Ⅼ=50</span><span>Ⅽ=100</span><span>Ⅿ=1000</span>
+                    </div>
+                    <p style="margin-top:15px;">🏛️ Правило: меньшая цифра перед большей — вычитаем (Ⅳ=4), после — складываем (Ⅵ=6).</p>
+                    <p>🕰️ 2026 год: <strong>MMXXVI</strong></p>
+                `
+            },
+            {
+                title: '📐 Геометрические фигуры',
+                content: `
+                    <div class="badge-grid">
+                        <div class="badge-item">⬛ <strong>Квадрат</strong><br>Периметр: 4×a<br>Площадь: a²</div>
+                        <div class="badge-item">🟦 <strong>Прямоугольник</strong><br>Периметр: 2(a+b)<br>Площадь: a×b</div>
+                        <div class="badge-item">🔺 <strong>Треугольник</strong><br>Сумма углов = 180°</div>
+                        <div class="badge-item">⭕ <strong>Круг</strong><br>Радиус r<br>Длина: 2πr</div>
+                    </div>
+                `
+            },
+            {
+                title: '🧮 Дроби и доли',
+                content: `
+                    <div class="badge-grid">
+                        <div class="badge-item">½ — половина</div>
+                        <div class="badge-item">⅓ — треть</div>
+                        <div class="badge-item">¼ — четверть</div>
+                        <div class="badge-item">¾ — три четверти</div>
+                    </div>
+                    <p style="margin-top:15px;">💡 Чтобы найти долю числа: (число ÷ знаменатель) × числитель. Пример: ¾ от 20 = (20÷4)×3 = 15.</p>
+                `
+            },
+            {
+                title: '🕰️ Время',
+                content: `
+                    <div class="badge-grid">
+                        <div class="badge-item">1 мин = 60 с</div>
+                        <div class="badge-item">1 ч = 60 мин</div>
+                        <div class="badge-item">1 сутки = 24 ч</div>
+                        <div class="badge-item">1 неделя = 7 дн</div>
+                        <div class="badge-item">1 мес = 30-31 дн</div>
+                        <div class="badge-item">1 год = 365/366 дн</div>
+                        <div class="badge-item">1 век = 100 лет</div>
+                    </div>
+                `
+            }
+        ]
+    },
+    
+    russian: {
+        title: '📖 Русский язык',
+        blocks: [
+            {
+                title: '🔤 Алфавит (33 буквы)',
+                content: `
+                    <div class="alphabet-grid">
+                        ${'А Б В Г Д Е Ё Ж З И Й К Л М Н О П Р С Т У Ф Х Ц Ч Ш Щ Ъ Ы Ь Э Ю Я'.split(' ').map(l => `<div class="alphabet-letter">${l}</div>`).join('')}
+                    </div>
+                    <p style="margin-top:15px;">📝 10 гласных, 21 согласная, 2 знака (Ъ, Ь).</p>
+                `
+            },
+            {
+                title: '📝 Части речи',
+                content: `
+                    <div class="badge-grid">
+                        <div class="badge-item"><strong>Существительное</strong><br>Кто? Что?</div>
+                        <div class="badge-item"><strong>Прилагательное</strong><br>Какой? Чей?</div>
+                        <div class="badge-item"><strong>Глагол</strong><br>Что делать?</div>
+                        <div class="badge-item"><strong>Наречие</strong><br>Как? Где?</div>
+                        <div class="badge-item"><strong>Местоимение</strong><br>Я, ты, он</div>
+                        <div class="badge-item"><strong>Предлог</strong><br>В, на, под</div>
+                    </div>
+                `
+            },
+            {
+                title: '🎯 Падежи',
+                content: `
+                    <p style="font-size:1.2rem;text-align:center;background:#fff3cd;padding:15px;border-radius:25px;"><strong>И</strong>ван <strong>Р</strong>одил <strong>Д</strong>евчонку, <strong>В</strong>елел <strong>Т</strong>ащить <strong>П</strong>елёнку</p>
+                    <table style="margin-top:15px;">
+                        <tr><th>Падеж</th><th>Вопрос</th><th>Пример</th></tr>
+                        <tr><td>Именительный</td><td>Кто? Что?</td><td>кот</td></tr>
+                        <tr><td>Родительный</td><td>Кого? Чего?</td><td>кота</td></tr>
+                        <tr><td>Дательный</td><td>Кому? Чему?</td><td>коту</td></tr>
+                        <tr><td>Винительный</td><td>Кого? Что?</td><td>кота</td></tr>
+                        <tr><td>Творительный</td><td>Кем? Чем?</td><td>котом</td></tr>
+                        <tr><td>Предложный</td><td>О ком? О чём?</td><td>о коте</td></tr>
+                    </table>
+                `
+            },
+            {
+                title: '📝 Состав слова',
+                content: `
+                    <div style="text-align:center;font-size:1.2rem;line-height:2.5;">
+                        🔴 <strong>ПРИСТАВКА</strong> → перед корнем<br>
+                        🟢 <strong>КОРЕНЬ</strong> → главная часть<br>
+                        🟡 <strong>СУФФИКС</strong> → после корня<br>
+                        🔵 <strong>ОКОНЧАНИЕ</strong> → изменяемая часть
+                    </div>
+                    <p style="margin-top:10px;">📝 Пример: <strong>ПЕРЕЛЕСОК</strong> = пере- (приставка) + -лес- (корень) + -ок (суффикс) + нулевое окончание.</p>
+                `
+            },
+            {
+                title: '✏️ ЖИ-ШИ, ЧА-ЩА, ЧУ-ЩУ',
+                content: `
+                    <div style="text-align:center;font-size:1.3rem;line-height:2.5;">
+                        <strong style="color:#e74c3c;">ЖИ-ШИ</strong> пиши с <strong>И</strong>! (жираф, машина)<br>
+                        <strong style="color:#e74c3c;">ЧА-ЩА</strong> пиши с <strong>А</strong>! (чашка, роща)<br>
+                        <strong style="color:#e74c3c;">ЧУ-ЩУ</strong> пиши с <strong>У</strong>! (чудо, щука)<br>
+                        <strong style="color:#e74c3c;">ЧК-ЧН</strong> без мягкого знака! (точка, речной)
+                    </div>
+                `
+            }
+        ]
+    },
+    
+    english: {
+        title: '🇬🇧 Английский язык',
+        blocks: [
+            {
+                title: '👋 Приветствия и вежливые слова',
+                content: `
+                    <table>
+                        <tr><th>По-английски</th><th>По-русски</th></tr>
+                        <tr><td>Hello! / Hi!</td><td>Привет!</td></tr>
+                        <tr><td>Good morning!</td><td>Доброе утро!</td></tr>
+                        <tr><td>How are you? – I'm fine, thank you!</td><td>Как дела? – Хорошо, спасибо!</td></tr>
+                        <tr><td>Please</td><td>Пожалуйста (просьба)</td></tr>
+                        <tr><td>Thank you!</td><td>Спасибо!</td></tr>
+                        <tr><td>You're welcome!</td><td>Пожалуйста (ответ)</td></tr>
+                        <tr><td>Sorry!</td><td>Извини!</td></tr>
+                    </table>
+                `
+            },
+            {
+                title: '📍 Предлоги места',
+                content: `
+                    <table>
+                        <tr><th>Предлог</th><th>Значение</th><th>Пример</th></tr>
+                        <tr><td><strong>in</strong></td><td>в</td><td>The cat is in the box. 🐱📦</td></tr>
+                        <tr><td><strong>on</strong></td><td>на</td><td>The book is on the table. 📚</td></tr>
+                        <tr><td><strong>under</strong></td><td>под</td><td>The dog is under the bed. 🐶🛏️</td></tr>
+                        <tr><td><strong>next to</strong></td><td>рядом</td><td>The lamp is next to the sofa. 🛋️</td></tr>
+                        <tr><td><strong>between</strong></td><td>между</td><td>I sit between mom and dad. 👨‍👩‍👧</td></tr>
+                        <tr><td><strong>behind</strong></td><td>за</td><td>The sun is behind the cloud. ☀️☁️</td></tr>
+                        <tr><td><strong>near</strong></td><td>возле</td><td>The park is near the school. 🏫🌳</td></tr>
+                    </table>
+                `
+            },
+            {
+                title: '🗣️ Разговорные фразы',
+                content: `
+                    <table>
+                        <tr><td>My name is...</td><td>Меня зовут...</td></tr>
+                        <tr><td>I am 8 years old.</td><td>Мне 8 лет.</td></tr>
+                        <tr><td>Nice to meet you!</td><td>Приятно познакомиться!</td></tr>
+                        <tr><td>I like...</td><td>Я люблю...</td></tr>
+                        <tr><td>It's delicious!</td><td>Очень вкусно!</td></tr>
+                        <tr><td>I'm hungry.</td><td>Я голоден.</td></tr>
+                        <tr><td>I'm tired.</td><td>Я устал.</td></tr>
+                        <tr><td>Cool! / Awesome!</td><td>Круто!</td></tr>
+                        <tr><td>Good job!</td><td>Молодец!</td></tr>
+                        <tr><td>Can you help me?</td><td>Можешь помочь?</td></tr>
+                        <tr><td>I don't understand.</td><td>Я не понимаю.</td></tr>
+                    </table>
+                `
+            },
+            {
+                title: '🐱 Животные',
+                content: `
+                    <div class="badge-grid">
+                        <div class="badge-item">cat — кошка 🐱</div>
+                        <div class="badge-item">dog — собака 🐶</div>
+                        <div class="badge-item">rabbit — кролик 🐰</div>
+                        <div class="badge-item">bird — птица 🐦</div>
+                        <div class="badge-item">fish — рыба 🐟</div>
+                        <div class="badge-item">cow — корова 🐄</div>
+                        <div class="badge-item">pig — свинья 🐷</div>
+                        <div class="badge-item">horse — лошадь 🐴</div>
+                    </div>
+                `
+            }
+        ]
+    },
+    
+    world: {
+        title: '🌍 Окружающий мир',
+        blocks: [
+            {
+                title: '🪐 Солнечная система',
+                content: `
+                    <table>
+                        <tr><th>Планета</th><th>Порядок</th><th>Факт</th></tr>
+                        <tr><td>☿️ Меркурий</td><td>1-я</td><td>Самая близкая к Солнцу</td></tr>
+                        <tr><td>♀️ Венера</td><td>2-я</td><td>Самая горячая (+462°C)</td></tr>
+                        <tr><td>🌍 Земля</td><td>3-я</td><td>Наш дом! 💙</td></tr>
+                        <tr><td>♂️ Марс</td><td>4-я</td><td>Красная планета</td></tr>
+                        <tr><td>♃ Юпитер</td><td>5-я</td><td>Самая большая</td></tr>
+                        <tr><td>♄ Сатурн</td><td>6-я</td><td>Красивые кольца</td></tr>
+                        <tr><td>⛢ Уран</td><td>7-я</td><td>Вращается лёжа</td></tr>
+                        <tr><td>♆ Нептун</td><td>8-я</td><td>Самая дальняя</td></tr>
+                    </table>
+                `
+            },
+            {
+                title: '💪 Тело человека',
+                content: `
+                    <div class="badge-grid">
+                        <div class="badge-item">🧠 Мозг<br>86 млрд нейронов</div>
+                        <div class="badge-item">🫀 Сердце<br>100 000 уд/день</div>
+                        <div class="badge-item">🦴 Кости<br>206 у взрослого</div>
+                        <div class="badge-item">💪 Мышцы<br>~640 мышц</div>
+                    </div>
+                    <p style="margin-top:15px;">🤔 У новорождённого ~300 костей! Они срастаются по мере роста.</p>
+                `
+            },
+            {
+                title: '🌳 Природные зоны России',
+                content: `
+                    <table>
+                        <tr><th>Зона</th><th>Особенность</th><th>Животные</th></tr>
+                        <tr><td>❄️ Арктика</td><td>Лёд и холод</td><td>Белый медведь</td></tr>
+                        <tr><td>🌿 Тундра</td><td>Вечная мерзлота</td><td>Северный олень</td></tr>
+                        <tr><td>🌲 Тайга</td><td>Хвойные леса</td><td>Медведь, лось</td></tr>
+                        <tr><td>🍂 Смешанный лес</td><td>Дуб, берёза</td><td>Волк, лиса</td></tr>
+                        <tr><td>🌾 Степь</td><td>Травы</td><td>Суслик, орёл</td></tr>
+                    </table>
+                `
+            }
+        ]
+    },
+    
+    facts: {
+        title: '🤯 Удивительные факты',
+        blocks: [
+            {
+                title: '🚀 Космос',
+                content: `
+                    <div class="fact-card"><div class="fact-title">☀️ Солнце — звезда</div>Оно в 109 раз больше Земли! Свет до нас идёт 8 минут.</div>
+                    <div class="fact-card"><div class="fact-title">🕳️ Чёрные дыры</div>Гравитация настолько сильна, что даже свет не может вырваться!</div>
+                    <div class="fact-card"><div class="fact-title">🌕 Луна</div>Каждый год Луна отдаляется от Земли на 3,8 см.</div>
+                    <div class="fact-card"><div class="fact-title">⭐ Полярная звезда</div>Свет от неё до нас идёт 433 года! Мы видим её такой, какой она была 433 года назад.</div>
+                `
+            },
+            {
+                title: '🐾 Животные',
+                content: `
+                    <div class="fact-card"><div class="fact-title">🐘 Слон</div>Единственное млекопитающее, которое не умеет прыгать.</div>
+                    <div class="fact-card"><div class="fact-title">🐙 Осьминог</div>Имеет 3 сердца и голубую кровь!</div>
+                    <div class="fact-card"><div class="fact-title">🦎 Аксолотль</div>Может отрастить новую лапу, хвост и даже часть мозга!</div>
+                    <div class="fact-card"><div class="fact-title">🐌 Улитка</div>Может спать до 3 лет подряд.</div>
+                    <div class="fact-card"><div class="fact-title">🦒 Жираф</div>Спит всего 30 минут в сутки.</div>
+                `
+            },
+            {
+                title: '🌍 Природа и рекорды',
+                content: `
+                    <div class="fact-card"><div class="fact-title">🌊 Марианская впадина</div>Глубина 11 км! Туда поместится Эверест и ещё 2 км.</div>
+                    <div class="fact-card"><div class="fact-title">🏔️ Эверест</div>Самая высокая гора — 8 848 м.</div>
+                    <div class="fact-card"><div class="fact-title">🌋 Вулканы</div>На Земле около 1500 действующих вулканов.</div>
+                    <div class="fact-card"><div class="fact-title">💧 Байкал</div>Самое глубокое озеро (1 642 м). 20% всей пресной воды планеты!</div>
+                `
+            }
+        ]
+    }
+};
+
+// ==================== ФУНКЦИИ ====================
+function openSection(sectionId) {
+    const data = ENCYCLOPEDIA[sectionId];
+    const screen = document.getElementById('sectionScreen');
+    const content = document.getElementById('sectionContent');
+    
+    let html = `
+        <button class="back-btn" onclick="closeSection()">↩️ Назад к разделам</button>
+        <div class="section-header">${data.title}</div>
+    `;
+    
+    data.blocks.forEach(block => {
+        html += `
+            <div class="block">
+                <div class="block-title" onclick="toggleBlock(this)">
+                    <span>${block.title}</span>
+                    <span>▼</span>
+                </div>
+                <div class="block-body">
+                    ${block.content}
+                </div>
+            </div>
+        `;
+    });
+    
+    content.innerHTML = html;
+    screen.classList.add('active');
+    document.body.style.overflow = 'hidden'; // Запрет скролла фона
+}
+
+function closeSection() {
+    const screen = document.getElementById('sectionScreen');
+    screen.classList.remove('active');
+    document.body.style.overflow = ''; // Возвращаем скролл
+}
+
+function toggleBlock(header) {
+    const body = header.nextElementSibling;
+    const arrow = header.querySelector('span:last-child');
+    if (body.style.display === 'none') {
+        body.style.display = 'block';
+        arrow.textContent = '▼';
+    } else {
+        body.style.display = 'none';
+        arrow.textContent = '▶';
+    }
+}
+
+// Поиск
+document.getElementById('searchInput').addEventListener('input', function(e) {
+    const query = e.target.value.toLowerCase().trim();
+    if (!query) return;
+    
+    if (query.length < 2) return; // Ищем от 2 букв
+    
+    // Ищем по всем разделам, открываем первый найденный
+    for (const [sectionId, sectionData] of Object.entries(ENCYCLOPEDIA)) {
+        for (const block of sectionData.blocks) {
+            const text = block.title + ' ' + block.content.replace(/<[^>]*>/g, ' ');
+            if (text.toLowerCase().includes(query)) {
+                openSection(sectionId);
+                // Подсветка (простая)
+                setTimeout(() => {
+                    const allBlocks = document.querySelectorAll('.block-body');
+                    allBlocks.forEach(b => {
+                        b.innerHTML = b.innerHTML.replace(
+                            new RegExp(`(${query})`, 'gi'),
+                            '<mark style="background:#ffeb3b;padding:2px 4px;border-radius:4px;">$1</mark>'
+                        );
+                    });
+                }, 100);
+                return;
+            }
+        }
+    }
+    showNotification('😔 Ничего не найдено. Попробуй другое слово!', false);
+});
+
+// Уведомление
+function showNotification(text, isGood) {
+    const n = document.createElement('div');
+    n.textContent = text;
+    n.style.cssText = `
+        position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+        background: ${isGood ? '#d4edc9' : '#ffe0b0'}; border: 2px solid ${isGood ? '#4caf50' : '#ff9800'};
+        border-radius: 40px; padding: 12px 25px; z-index: 9999; font-weight: bold;
+        font-family: 'Comic Neue', cursive; box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    `;
+    document.body.appendChild(n);
+    setTimeout(() => { n.style.opacity = '0'; n.style.transition = '0.3s'; }, 2000);
+    setTimeout(() => n.remove(), 2500);
+}
+</script>
+
+</body>
+</html>

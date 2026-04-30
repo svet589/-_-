@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎨 Творческая мастерская — Академия</title>
+    <style>
+        * { box-sizing:border-box; margin:0; padding:0; }
+        body { font-family:'Comic Neue',cursive,sans-serif; background:radial-gradient(circle at 20% 20%,#f9d56e,#f8b042); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+        .game-container { max-width:900px; width:100%; background:rgba(255,255,255,0.95); border-radius:40px; padding:20px; box-shadow:0 20px 40px rgba(0,0,0,0.3); border:5px solid #ffb347; }
+        h2 { text-align:center; color:#2d4059; margin-bottom:10px; }
+        .tabs { display:flex; gap:10px; justify-content:center; margin:10px 0; }
+        .tab { padding:10px 20px; border-radius:20px; border:3px solid #d4a259; background:#fff7e6; cursor:pointer; font-weight:bold; font-family:inherit; box-shadow:0 3px 0 #b47c2e; }
+        .tab.active { background:#ffd966; }
+        .canvas-wrap { border:3px solid #d4a259; border-radius:20px; overflow:hidden; margin:10px 0; background:white; }
+        canvas { display:block; width:100%; cursor:crosshair; touch-action:none; }
+        .toolbar { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; align-items:center; margin:10px 0; }
+        .color-btn { width:32px; height:32px; border-radius:50%; border:3px solid #ddd; cursor:pointer; }
+        .color-btn.active { border-color:#2d4059; box-shadow:0 0 0 3px #ffd966; }
+        .brush-btn { padding:8px 15px; border-radius:20px; border:3px solid #d4a259; background:#fff7e6; cursor:pointer; font-weight:bold; font-family:inherit; }
+        .brush-btn.active { background:#ffd966; }
+        .coloring-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:12px; margin:10px 0; }
+        .coloring-item { background:#fff7e6; border-radius:20px; padding:12px; cursor:pointer; text-align:center; border:3px solid #d4a259; box-shadow:0 4px 0 #b47c2e; }
+        .coloring-item img { width:100%; height:120px; object-fit:contain; border-radius:10px; border:2px solid #ddd; background:white; }
+        .coloring-item:active { transform:translateY(2px); box-shadow:0 2px 0 #b47c2e; }
+        .back-btn { background:#b3c7e5; border:none; border-radius:20px; padding:12px 25px; font-weight:bold; cursor:pointer; font-family:inherit; box-shadow:0 4px 0 #6b7f9c; margin-top:10px; }
+    </style>
+</head>
+<body>
+<div class="game-container" id="app">
+    <h2>🎨 Творческая мастерская</h2>
+    <div class="tabs">
+        <button class="tab active" onclick="switchMode('free')">✏️ Рисовать</button>
+        <button class="tab" onclick="switchMode('coloring')">🖍️ Раскраски</button>
+    </div>
+    <div id="content"></div>
+    <button class="back-btn" onclick="window.close()">↩️ Закрыть</button>
+</div>
+
+<script>
+// ==================== РЕЖИМЫ ====================
+let mode = 'free';
+
+// ==================== СВОБОДНОЕ РИСОВАНИЕ ====================
+let freeCanvas, freeCtx, freeColor='#000000', freeBrush=3, freeDrawing=false, freeLastX=0, freeLastY=0, freeStack=[];
+
+function initFreeMode() {
+    document.getElementById('content').innerHTML = `
+        <div class="canvas-wrap"><canvas id="freeCanvas" width="800" height="500"></canvas></div>
+        <div class="toolbar" id="palette">
+            ${['#000000','#e74c3c','#e67e22','#f1c40f','#2ecc71','#3498db','#9b59b6','#1abc9c','#e84393','#795548','#95a5a6','#ffffff'].map((c,i)=>`<button class="color-btn${i===0?' active':''}" style="background:${c}" data-color="${c}"></button>`).join('')}
+        </div>
+        <div class="toolbar">
+            <button class="brush-btn active" data-brush="3">🖊️ Тонкая</button>
+            <button class="brush-btn" data-brush="8">🖊️ Средняя</button>
+            <button class="brush-btn" data-brush="16">🖊️ Толстая</button>
+            <button class="brush-btn" data-brush="40" id="eraser">🧹 Ластик</button>
+        </div>
+        <div class="toolbar">
+            <button class="brush-btn" onclick="undoFree()">↩️ Отменить</button>
+            <button class="brush-btn" onclick="clearFree()">🗑️ Очистить</button>
+            <button class="brush-btn" onclick="saveFree()">💾 Сохранить</button>
+        </div>`;
+    
+    freeCanvas = document.getElementById('freeCanvas');
+    freeCtx = freeCanvas.getContext('2d');
+    freeCtx.fillStyle = '#fff'; freeCtx.fillRect(0,0,freeCanvas.width,freeCanvas.height);
+    freeStack = []; saveFreeState();
+    
+    freeCanvas.onmousedown = e => { freeDrawing=true; let p=getPos(e); freeLastX=p.x; freeLastY=p.y; drawDot(p.x,p.y); };
+    freeCanvas.onmousemove = e => { if(!freeDrawing)return; let p=getPos(e); drawLine(freeLastX,freeLastY,p.x,p.y); freeLastX=p.x; freeLastY=p.y; };
+    freeCanvas.onmouseup = () => { freeDrawing=false; saveFreeState(); };
+    freeCanvas.ontouchstart = e => { e.preventDefault(); freeDrawing=true; let p=getPos(e.touches[0]); freeLastX=p.x; freeLastY=p.y; drawDot(p.x,p.y); };
+    freeCanvas.ontouchmove = e => { e.preventDefault(); if(!freeDrawing)return; let p=getPos(e.touches[0]); drawLine(freeLastX,freeLastY,p.x,p.y); freeLastX=p.x; freeLastY=p.y; };
+    freeCanvas.ontouchend = () => { freeDrawing=false; saveFreeState(); };
+    
+    document.querySelectorAll('#palette .color-btn').forEach(b => b.onclick = function() {
+        document.querySelectorAll('#palette .color-btn').forEach(x => x.classList.remove('active'));
+        this.classList.add('active');
+        freeColor = this.dataset.color;
+    });
+    document.querySelectorAll('[data-brush]').forEach(b => b.onclick = function() {
+        document.querySelectorAll('[data-brush]').forEach(x => x.classList.remove('active'));
+        this.classList.add('active');
+        freeBrush = parseInt(this.dataset.brush);
+        if(this.id==='eraser') freeColor='#ffffff';
+    });
+}
+
+function getPos(e) { const r=freeCanvas.getBoundingClientRect(); return {x:(e.clientX-r.left)*(freeCanvas.width/r.width), y:(e.clientY-r.top)*(freeCanvas.height/r.height)}; }
+function drawDot(x,y) { freeCtx.beginPath(); freeCtx.arc(x,y,freeBrush/2,0,Math.PI*2); freeCtx.fillStyle=freeColor; freeCtx.fill(); }
+function drawLine(x1,y1,x2,y2) { freeCtx.beginPath(); freeCtx.moveTo(x1,y1); freeCtx.lineTo(x2,y2); freeCtx.strokeStyle=freeColor; freeCtx.lineWidth=freeBrush; freeCtx.lineCap='round'; freeCtx.stroke(); }
+function saveFreeState() { if(freeStack.length>=30)freeStack.shift(); freeStack.push(freeCanvas.toDataURL()); }
+function undoFree() { if(freeStack.length<=1){freeCtx.fillStyle='#fff';freeCtx.fillRect(0,0,freeCanvas.width,freeCanvas.height);saveFreeState();return;} freeStack.pop(); let i=new Image(); i.onload=()=>{freeCtx.clearRect(0,0,freeCanvas.width,freeCanvas.height);freeCtx.drawImage(i,0,0);}; i.src=freeStack[freeStack.length-1]; }
+function clearFree() { if(confirm('Очистить всё?')){freeCtx.fillStyle='#fff';freeCtx.fillRect(0,0,freeCanvas.width,freeCanvas.height);freeStack=[];saveFreeState();} }
+function saveFree() { const a=document.createElement('a'); a.download='рисунок_'+new Date().toISOString().slice(0,10)+'.png'; a.href=freeCanvas.toDataURL(); a.click(); }
+
+// ==================== РАСКРАСКИ ====================
+const COLORING_PAGES = [
+    { name:'🦊 Лис', file:'../assets/coloring/fox.png' },
+    { name:'🐶 Собака', file:'../assets/coloring/dog.png' },
+    { name:'🐰 Кролик', file:'../assets/coloring/rabbit.png' },
+    { name:'🦉 Сова', file:'../assets/coloring/owl.png' },
+    { name:'🤖 Робот', file:'../assets/coloring/robot-basketball.png' },
+];
+const coloringCache = {};
+
+async function loadImage(src) {
+    if(coloringCache[src]) return coloringCache[src];
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => { coloringCache[src]=img; resolve(img); };
+        img.onerror = reject;
+        img.src = src;
+    });
+}
+
+async function initColoringMode() {
+    document.getElementById('content').innerHTML = '<p style="text-align:center;padding:20px;">⏳ Загружаем...</p>';
+    for(const p of COLORING_PAGES) try { await loadImage(p.file); } catch(e) {}
+    let html = '<div class="coloring-grid">';
+    COLORING_PAGES.forEach(p => {
+        const src = coloringCache[p.file]?.src || '';
+        html += `<div class="coloring-item" onclick="startColoring('${p.file}')"><img src="${src}" alt="${p.name}"><div style="font-weight:bold;margin-top:5px;">${p.name}</div></div>`;
+    });
+    html += '</div>';
+    document.getElementById('content').innerHTML = html;
+}
+
+function startColoring(src) {
+    const img = coloringCache[src];
+    if(!img) return;
+    document.getElementById('content').innerHTML = `
+        <div class="canvas-wrap"><canvas id="coloringCanvas" width="${img.width}" height="${img.height}"></canvas></div>
+        <div class="toolbar" id="colPalette">
+            ${['#e74c3c','#e67e22','#f1c40f','#2ecc71','#3498db','#9b59b6','#1abc9c','#e84393','#795548','#000000','#ffffff'].map((c,i)=>`<button class="color-btn${i===0?' active':''}" style="background:${c}" data-color="${c}"></button>`).join('')}
+        </div>
+        <div class="toolbar">
+            <button class="brush-btn active" data-brush="4">🖊️ Тонкая</button>
+            <button class="brush-btn" data-brush="10">🖊️ Средняя</button>
+            <button class="brush-btn" data-brush="20">🖊️ Толстая</button>
+            <button class="brush-btn" data-brush="50" id="colEraser">🧹 Ластик</button>
+        </div>
+        <div class="toolbar">
+            <button class="brush-btn" onclick="undoCol()">↩️ Отменить</button>
+            <button class="brush-btn" onclick="resetCol()">🔄 Заново</button>
+            <button class="brush-btn" onclick="saveCol()">💾 Сохранить</button>
+            <button class="brush-btn" onclick="initColoringMode()">↩️ К раскраскам</button>
+        </div>`;
+    
+    const c=document.getElementById('coloringCanvas'), ctx=c.getContext('2d');
+    ctx.fillStyle='#fff'; ctx.fillRect(0,0,c.width,c.height);
+    ctx.drawImage(img,0,0,c.width,c.height);
+    let colColor='#e74c3c', colBrush=4, colDrawing=false, colLastX=0, colLastY=0, colStack=[];
+    colStack.push(c.toDataURL());
+    
+    c.onmousedown = e => { colDrawing=true; let p=getColPos(e); colLastX=p.x; colLastY=p.y; drawColDot(ctx,p.x,p.y); };
+    c.onmousemove = e => { if(!colDrawing)return; let p=getColPos(e); drawColLine(ctx,colLastX,colLastY,p.x,p.y); colLastX=p.x; colLastY=p.y; };
+    c.onmouseup = () => { colDrawing=false; colStack.push(c.toDataURL()); };
+    c.ontouchstart = e => { e.preventDefault(); colDrawing=true; let p=getColPos(e.touches[0]); colLastX=p.x; colLastY=p.y; drawColDot(ctx,p.x,p.y); };
+    c.ontouchmove = e => { e.preventDefault(); if(!colDrawing)return; let p=getColPos(e.touches[0]); drawColLine(ctx,colLastX,colLastY,p.x,p.y); colLastX=p.x; colLastY=p.y; };
+    c.ontouchend = () => { colDrawing=false; colStack.push(c.toDataURL()); };
+    
+    document.querySelectorAll('#colPalette .color-btn').forEach(b => b.onclick = function() {
+        document.querySelectorAll('#colPalette .color-btn').forEach(x => x.classList.remove('active'));
+        this.classList.add('active'); colColor = this.dataset.color;
+    });
+    document.querySelectorAll('[data-brush]').forEach(b => b.onclick = function() {
+        document.querySelectorAll('[data-brush]').forEach(x => x.classList.remove('active'));
+        this.classList.add('active'); colBrush = parseInt(this.dataset.brush);
+        if(this.id==='colEraser') colColor='#ffffff';
+    });
+    
+    function getColPos(e){const r=c.getBoundingClientRect();return{x:(e.clientX-r.left)*(c.width/r.width),y:(e.clientY-r.top)*(c.height/r.height)};}
+    function drawColDot(ctx,x,y){ctx.beginPath();ctx.arc(x,y,colBrush/2,0,Math.PI*2);ctx.fillStyle=colColor;ctx.fill();}
+    function drawColLine(ctx,x1,y1,x2,y2){ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.strokeStyle=colColor;ctx.lineWidth=colBrush;ctx.lineCap='round';ctx.stroke();}
+    window.undoCol = () => { if(colStack.length<=1){ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);ctx.drawImage(img,0,0);colStack=[c.toDataURL()];return;} colStack.pop(); let i=new Image(); i.onload=()=>{ctx.clearRect(0,0,c.width,c.height);ctx.drawImage(i,0,0);}; i.src=colStack[colStack.length-1]; };
+    window.resetCol = () => { if(confirm('Начать заново?')){ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);ctx.drawImage(img,0,0);colStack=[c.toDataURL()];} };
+    window.saveCol = () => { const a=document.createElement('a'); a.download='раскраска_'+new Date().toISOString().slice(0,10)+'.png'; a.href=c.toDataURL(); a.click(); };
+}
+
+// ==================== ПЕРЕКЛЮЧЕНИЕ ====================
+function switchMode(m) {
+    mode = m;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelector(`[onclick="switchMode('${m}')"]`).classList.add('active');
+    if(m==='free') initFreeMode();
+    else initColoringMode();
+}
+
+// Старт
+initFreeMode();
+</script>
+</body>
+      </html>

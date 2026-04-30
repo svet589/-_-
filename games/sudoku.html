@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧩 Судоку 4×4 — Академия</title>
+    <style>
+        * { box-sizing:border-box; margin:0; padding:0; }
+        body { font-family:'Comic Neue',cursive,sans-serif; background:radial-gradient(circle at 20% 20%,#f9d56e,#f8b042); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+        .game-container { max-width:400px; width:100%; background:rgba(255,255,255,0.95); border-radius:40px; padding:25px; box-shadow:0 20px 40px rgba(0,0,0,0.3); border:5px solid #ffb347; text-align:center; }
+        h2 { color:#2d4059; margin-bottom:15px; }
+        .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:5px; background:#333; padding:10px; border-radius:20px; max-width:280px; margin:0 auto; }
+        .cell { aspect-ratio:1; background:#fff; display:flex; align-items:center; justify-content:center; font-size:1.5rem; font-weight:bold; cursor:pointer; border-radius:10px; }
+        .cell.selected { background:#ffd966; }
+        .cell.fixed { background:#eee; }
+        .nums { display:flex; gap:8px; justify-content:center; margin:15px 0; }
+        .nums button { width:45px; height:45px; font-size:1.2rem; }
+        button { background:#f9d342; border:none; border-radius:15px; font-weight:bold; cursor:pointer; font-family:inherit; box-shadow:0 4px 0 #b47c2e; }
+        button:active { transform:translateY(3px); box-shadow:0 1px 0 #b47c2e; }
+        .back-btn { background:#b3c7e5; box-shadow:0 4px 0 #6b7f9c; margin-top:10px; }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <h2>🧩 Судоку 4×4</h2>
+    <div class="grid" id="grid"></div>
+    <div class="nums">
+        <button onclick="setNum(1)">1</button><button onclick="setNum(2)">2</button><button onclick="setNum(3)">3</button><button onclick="setNum(4)">4</button>
+    </div>
+    <button onclick="check()">✅ Проверить</button>
+    <button class="back-btn" onclick="window.close()">↩️ Закрыть</button>
+</div>
+<script>
+let board=[], fixed=[], selR=-1, selC=-1;
+function init(){
+    board=[[1,2,3,4],[3,4,1,2],[2,1,4,3],[4,3,2,1]];
+    fixed=[[true,true,true,true],[true,true,true,true],[true,true,true,true],[true,true,true,true]];
+    for(let i=0;i<6;i++){const r=Math.floor(Math.random()*4),c=Math.floor(Math.random()*4);board[r][c]=null;fixed[r][c]=false;}
+    render();
+}
+function render(){
+    let h='';
+    for(let r=0;r<4;r++) for(let c=0;c<4;c++){
+        let cls='cell';
+        if(fixed[r][c]) cls+=' fixed';
+        if(r===selR&&c===selC) cls+=' selected';
+        h+=`<div class="${cls}" onclick="select(${r},${c})">${board[r][c]||'?'}</div>`;
+    }
+    document.getElementById('grid').innerHTML=h;
+}
+function select(r,c){if(!fixed[r][c]){selR=r;selC=c;render();}}
+function setNum(n){if(selR>=0&&selC>=0){board[selR][selC]=n;selR=-1;selC=-1;render();}}
+function check(){
+    for(let r=0;r<4;r++){const rs=new Set();for(let c=0;c<4;c++){if(!board[r][c]){alert('❌ Заполни все клетки!');return;}rs.add(board[r][c]);}if(rs.size!==4){alert('❌ Ошибка в строке '+(r+1));return;}}
+    for(let c=0;c<4;c++){const cs=new Set();for(let r=0;r<4;r++)cs.add(board[r][c]);if(cs.size!==4){alert('❌ Ошибка в столбце '+(c+1));return;}}
+    alert('🎉 Правильно! Судоку решено!');
+}
+init();
+</script>
+</body>
+</html>

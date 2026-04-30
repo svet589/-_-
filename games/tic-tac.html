@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>❌ Крестики-нолики — Академия</title>
+    <style>
+        * { box-sizing:border-box; margin:0; padding:0; }
+        body { font-family:'Comic Neue',cursive,sans-serif; background:radial-gradient(circle at 20% 20%,#f9d56e,#f8b042); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+        .game-container { max-width:400px; width:100%; background:rgba(255,255,255,0.95); border-radius:40px; padding:25px; box-shadow:0 20px 40px rgba(0,0,0,0.3); border:5px solid #ffb347; text-align:center; }
+        h2 { color:#2d4059; margin-bottom:15px; }
+        .board { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; background:#333; padding:10px; border-radius:20px; max-width:280px; margin:0 auto; }
+        .cell { aspect-ratio:1; background:#fff; display:flex; align-items:center; justify-content:center; font-size:3rem; cursor:pointer; border-radius:15px; transition:background 0.1s; }
+        .cell:hover { background:#e0e0e0; }
+        .cell.taken { cursor:default; }
+        .info { margin:15px 0; font-size:1.2rem; font-weight:bold; }
+        button { background:#f9d342; border:none; border-radius:20px; padding:12px 25px; font-weight:bold; font-size:1.1rem; cursor:pointer; box-shadow:0 4px 0 #b47c2e; font-family:inherit; margin:5px; }
+        button:active { transform:translateY(3px); box-shadow:0 1px 0 #b47c2e; }
+        .back-btn { background:#b3c7e5; box-shadow:0 4px 0 #6b7f9c; }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <h2>❌ Крестики-нолики</h2>
+    <div class="board" id="board"></div>
+    <p class="info" id="info">Твой ход (❌)</p>
+    <button class="back-btn" onclick="window.close()">↩️ Закрыть</button>
+</div>
+<script>
+let board = ['','','','','','','','',''];
+let gameOver = false;
+let player = '❌', bot = '⭕';
+
+function render() {
+    let h = '';
+    for(let i=0;i<9;i++) {
+        let cls = 'cell';
+        if(board[i]!=='') cls += ' taken';
+        h += `<div class="${cls}" onclick="clickCell(${i})">${board[i]}</div>`;
+    }
+    document.getElementById('board').innerHTML = h;
+}
+
+function clickCell(i) {
+    if(gameOver||board[i]!=='') return;
+    board[i] = player;
+    render();
+    if(checkWin(player)) { gameOver=true; document.getElementById('info').textContent='🎉 Ты победил!'; return; }
+    if(board.every(c=>c!=='')) { gameOver=true; document.getElementById('info').textContent='Ничья!'; return; }
+    // Бот
+    document.getElementById('info').textContent='Бот думает...';
+    setTimeout(()=>{
+        const empty = [];
+        for(let j=0;j<9;j++) if(board[j]==='') empty.push(j);
+        const move = empty[Math.floor(Math.random()*empty.length)];
+        board[move] = bot;
+        render();
+        if(checkWin(bot)) { gameOver=true; document.getElementById('info').textContent='😢 Бот победил!'; return; }
+        if(board.every(c=>c!=='')) { gameOver=true; document.getElementById('info').textContent='Ничья!'; return; }
+        document.getElementById('info').textContent='Твой ход (❌)';
+    }, 500);
+}
+
+function checkWin(p) {
+    const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    for(const l of lines) if(board[l[0]]===p && board[l[1]]===p && board[l[2]]===p) return true;
+    return false;
+}
+render();
+</script>
+</body>
+</html>

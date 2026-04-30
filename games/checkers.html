@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚫ Шашки — Академия</title>
+    <style>
+        * { box-sizing:border-box; margin:0; padding:0; }
+        body { font-family:'Comic Neue',cursive,sans-serif; background:radial-gradient(circle at 20% 20%,#f9d56e,#f8b042); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+        .game-container { max-width:500px; width:100%; background:rgba(255,255,255,0.95); border-radius:40px; padding:20px; box-shadow:0 20px 40px rgba(0,0,0,0.3); border:5px solid #ffb347; text-align:center; }
+        h2 { color:#2d4059; margin-bottom:10px; }
+        .board { display:grid; grid-template-columns:repeat(8,1fr); gap:2px; background:#8b5a2b; padding:10px; border-radius:20px; }
+        .cell { aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:8px; cursor:pointer; font-size:1.5rem; }
+        .cell.black { background:#b58863; } .cell.white { background:#f0d9b5; }
+        .cell.selected { border:3px solid red; }
+        .piece { width:70%; height:70%; border-radius:50%; }
+        .piece-black { background:#2c3e50; } .piece-white { background:#ecf0f1; }
+        .piece.king { box-shadow:0 0 10px gold; }
+        .info { margin:10px 0; font-weight:bold; }
+        button { background:#b3c7e5; border:none; border-radius:20px; padding:10px 20px; font-weight:bold; cursor:pointer; font-family:inherit; box-shadow:0 4px 0 #6b7f9c; }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <h2>⚫ Шашки</h2>
+    <div class="board" id="board"></div>
+    <p class="info" id="turn">Ходят: ⚫ Чёрные</p>
+    <button onclick="window.close()">↩️ Закрыть</button>
+</div>
+<script>
+let board=[], player='black', selR=-1, selC=-1, over=false;
+function init(){
+    board=[];
+    for(let r=0;r<8;r++){let row=[];for(let c=0;c<8;c++){if(r<3&&(r+c)%2===1)row.push('black');else if(r>4&&(r+c)%2===1)row.push('white');else row.push(null);}board.push(row);}
+    player='black';selR=-1;over=false;render();
+}
+function render(){
+    let h='';const t=document.getElementById('turn');
+    for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+        let cls='cell ';cls+=(r+c)%2===0?'white':'black';
+        if(r===selR&&c===selC)cls+=' selected';
+        let p='';const piece=board[r][c];
+        if(piece){p='<div class="piece piece-'+piece;if(piece.includes('king'))p+=' king';p+='"></div>';}
+        h+=`<div class="${cls}" onclick="clickCell(${r},${c})">${p}</div>`;
+    }
+    document.getElementById('board').innerHTML=h;
+    t.textContent='Ходят: '+(player==='black'?'⚫ Чёрные':'⚪ Белые');
+    if(over)t.textContent='🎉 Игра окончена!';
+}
+function clickCell(r,c){
+    if(over)return;
+    if(selR===-1){if(board[r][c]&&board[r][c].startsWith(player)){selR=r;selC=c;render();}return;}
+    const dr=r-selR,dc=c-selC,piece=board[selR][selC];
+    if(!piece)return;
+    if(r===selR&&c===selC){selR=-1;render();return;}
+    if(Math.abs(dr)===1&&Math.abs(dc)===1){
+        if(board[r][c])return;
+        if(!piece.includes('king')){if(player==='black'&&dr!==1)return;if(player==='white'&&dr!==-1)return;}
+        board[r][c]=piece;board[selR][selC]=null;
+        if(player==='black'&&r===7)board[r][c]='black_king';
+        if(player==='white'&&r===0)board[r][c]='white_king';
+        selR=-1;player=player==='black'?'white':'black';render();checkWin();return;
+    }
+    if(Math.abs(dr)===2&&Math.abs(dc)===2){
+        const mr=selR+dr/2,mc=selC+dc/2;
+        if(!board[mr][mc]||board[mr][mc].startsWith(player))return;
+        if(board[r][c])return;
+        board[r][c]=piece;board[selR][selC]=null;board[mr][mc]=null;
+        if(player==='black'&&r===7)board[r][c]='black_king';
+        if(player==='white'&&r===0)board[r][c]='white_king';
+        selR=-1;player=player==='black'?'white':'black';render();checkWin();return;
+    }
+    selR=-1;render();
+}
+function checkWin(){let b=false,w=false;for(let r=0;r<8;r++)for(let c=0;c<8;c++){if(board[r][c]&&board[r][c].startsWith('black'))b=true;if(board[r][c]&&board[r][c].startsWith('white'))w=true;}if(!b||!w){over=true;alert('🏆 Победили '+(b?'⚫ Чёрные':'⚪ Белые')+'!');}}
+init();
+</script>
+</body>
+</html>

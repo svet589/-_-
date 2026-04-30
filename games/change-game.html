@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💰 Сдача — Академия</title>
+    <style>
+        * { box-sizing:border-box; margin:0; padding:0; }
+        body { font-family:'Comic Neue',cursive,sans-serif; background:radial-gradient(circle at 20% 20%,#f9d56e,#f8b042); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+        .game-container { max-width:400px; width:100%; background:rgba(255,255,255,0.95); border-radius:40px; padding:25px; box-shadow:0 20px 40px rgba(0,0,0,0.3); border:5px solid #ffb347; text-align:center; }
+        h2 { color:#2d4059; margin-bottom:15px; }
+        .info { font-size:1.3rem; margin:10px 0; }
+        input { padding:15px; font-size:2rem; width:150px; text-align:center; border-radius:20px; border:3px solid #ffb347; font-family:inherit; }
+        button { background:#f9d342; border:none; border-radius:20px; padding:12px 25px; font-weight:bold; font-size:1.1rem; cursor:pointer; box-shadow:0 4px 0 #b47c2e; font-family:inherit; margin:5px; }
+        button:active { transform:translateY(3px); box-shadow:0 1px 0 #b47c2e; }
+        .back-btn { background:#b3c7e5; box-shadow:0 4px 0 #6b7f9c; }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <h2>💰 Сдача в магазине</h2>
+    <p class="info">🛒 Покупка стоит: <span id="price"></span>₽</p>
+    <p class="info">💵 Ты дал: <span id="paid"></span>₽</p>
+    <p>Сколько сдачи?</p>
+    <input type="number" id="answer" placeholder="?">
+    <br>
+    <button onclick="check()">✅ Проверить</button>
+    <button class="back-btn" onclick="window.close()">↩️ Закрыть</button>
+</div>
+<script>
+let correct;
+function newQ(){
+    const price=Math.floor(Math.random()*90)+10, paid=Math.floor(price+Math.random()*50)+10;
+    correct=paid-price;
+    document.getElementById('price').textContent=price;
+    document.getElementById('paid').textContent=paid;
+    document.getElementById('answer').value='';
+}
+function check(){
+    if(parseInt(document.getElementById('answer').value)===correct){alert('✅ Правильно!');newQ();}
+    else alert('❌ Неправильно! Сдача: '+correct+'₽');
+}
+newQ();
+</script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ Сравни числа — Академия</title>
+    <style>
+        * { box-sizing:border-box; margin:0; padding:0; }
+        body { font-family:'Comic Neue',cursive,sans-serif; background:radial-gradient(circle at 20% 20%,#f9d56e,#f8b042); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+        .game-container { max-width:450px; width:100%; background:rgba(255,255,255,0.95); border-radius:40px; padding:25px; box-shadow:0 20px 40px rgba(0,0,0,0.3); border:5px solid #ffb347; text-align:center; }
+        h2 { color:#2d4059; margin-bottom:10px; }
+        .timer { font-size:2rem; font-weight:bold; font-family:monospace; margin:10px 0; }
+        .question { font-size:2.5rem; margin:15px 0; font-weight:bold; }
+        .options { display:flex; gap:15px; justify-content:center; }
+        .option { background:#ffb347; padding:15px 30px; border-radius:50px; font-size:1.5rem; cursor:pointer; font-weight:bold; box-shadow:0 4px 0 #b47c2e; }
+        .option:active { transform:translateY(3px); box-shadow:0 1px 0 #b47c2e; }
+        button { background:#b3c7e5; border:none; border-radius:20px; padding:10px 20px; font-weight:bold; cursor:pointer; font-family:inherit; box-shadow:0 4px 0 #6b7f9c; }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <h2>⚡ Сравни числа</h2>
+    <div class="timer" id="timer">⏱️ 12</div>
+    <div class="question" id="question"></div>
+    <div class="options">
+        <div class="option" onclick="answer('<')">&lt;</div>
+        <div class="option" onclick="answer('>')">&gt;</div>
+        <div class="option" onclick="answer('=')">=</div>
+    </div>
+    <p>🎯 Счёт: <span id="score">0</span>/20</p>
+    <button onclick="window.close()">↩️ Закрыть</button>
+</div>
+<script>
+let score=0, active=true, timer, timeLeft=12, correct;
+function newQ(){
+    if(!active||score>=20)return;
+    const a=Math.floor(Math.random()*100)+1,b=Math.floor(Math.random()*100)+1;
+    correct=a<b?'<':(a>b?'>':'=');
+    document.getElementById('question').textContent=`${a} ? ${b}`;
+    timeLeft=12; document.getElementById('timer').textContent='⏱️ '+timeLeft;
+}
+function answer(v){
+    if(!active)return;
+    if(v===correct){score++;document.getElementById('score').textContent=score;if(score>=20){end('🎉 Победа!');return;}newQ();}
+    else end('❌ Неправильно!');
+}
+function end(msg){active=false;clearInterval(timer);alert(msg);}
+timer=setInterval(()=>{timeLeft--;document.getElementById('timer').textContent='⏱️ '+timeLeft;if(timeLeft<=0){clearInterval(timer);end('⏰ Время вышло!');}},1000);
+newQ();
+</script>
+</body>
+</html>

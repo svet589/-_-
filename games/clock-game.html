@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⏰ Который час? — Академия</title>
+    <style>
+        * { box-sizing:border-box; margin:0; padding:0; }
+        body { font-family:'Comic Neue',cursive,sans-serif; background:radial-gradient(circle at 20% 20%,#f9d56e,#f8b042); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+        .game-container { max-width:400px; width:100%; background:rgba(255,255,255,0.95); border-radius:40px; padding:25px; box-shadow:0 20px 40px rgba(0,0,0,0.3); border:5px solid #ffb347; text-align:center; }
+        h2 { color:#2d4059; margin-bottom:15px; }
+        .clock { font-size:5rem; margin:15px 0; }
+        input { padding:12px; font-size:1.5rem; width:180px; text-align:center; border-radius:20px; border:3px solid #ffb347; font-family:inherit; }
+        button { background:#f9d342; border:none; border-radius:20px; padding:12px 25px; font-weight:bold; font-size:1.1rem; cursor:pointer; box-shadow:0 4px 0 #b47c2e; font-family:inherit; margin:5px; }
+        button:active { transform:translateY(3px); box-shadow:0 1px 0 #b47c2e; }
+        .back-btn { background:#b3c7e5; box-shadow:0 4px 0 #6b7f9c; }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <h2>⏰ Который час?</h2>
+    <div class="clock" id="clock"></div>
+    <p>Напиши время в формате ЧЧ:ММ</p>
+    <input type="text" id="answer" placeholder="например: 3:15">
+    <br>
+    <button onclick="check()">✅ Проверить</button>
+    <button class="back-btn" onclick="window.close()">↩️ Закрыть</button>
+</div>
+<script>
+const emojis={1:'🕐',2:'🕑',3:'🕒',4:'🕓',5:'🕔',6:'🕕',7:'🕖',8:'🕗',9:'🕘',10:'🕙',11:'🕚',12:'🕛'};
+let correct;
+function newQ(){
+    const h=Math.floor(Math.random()*12)+1, m=Math.floor(Math.random()*12)*5;
+    let e=emojis[h];
+    if(m===30)e='🕝';else if(m===15)e='🕜';else if(m===45)e='🕞';
+    correct=`${h}:${m.toString().padStart(2,'0')}`;
+    document.getElementById('clock').textContent=e;
+    document.getElementById('answer').value='';
+}
+function check(){
+    if(document.getElementById('answer').value.trim()===correct){alert('✅ Правильно!');newQ();}
+    else alert('❌ Неправильно! Ответ: '+correct);
+}
+newQ();
+</script>
+</body>
+</html>

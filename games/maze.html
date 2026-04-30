@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🗺️ Лабиринт — Академия</title>
+    <style>
+        * { box-sizing:border-box; margin:0; padding:0; }
+        body { font-family:'Comic Neue',cursive,sans-serif; background:radial-gradient(circle at 20% 20%,#f9d56e,#f8b042); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+        .game-container { max-width:500px; width:100%; background:rgba(255,255,255,0.95); border-radius:40px; padding:20px; box-shadow:0 20px 40px rgba(0,0,0,0.3); border:5px solid #ffb347; text-align:center; }
+        h2 { color:#2d4059; margin-bottom:15px; }
+        .maze-grid { display:grid; grid-template-columns:repeat(9,1fr); gap:2px; background:#654321; padding:5px; border-radius:20px; margin:15px 0; }
+        .maze-cell { aspect-ratio:1; display:flex; align-items:center; justify-content:center; font-size:1.2rem; background:#a9d6e5; border-radius:8px; }
+        .maze-cell.wall { background:#8b5a2b; }
+        .maze-cell.player { background:#ffd966; }
+        .maze-cell.gift { background:#4caf50; }
+        .dpad { display:grid; grid-template-areas:'. up .' 'left . right' '. down .'; gap:8px; width:fit-content; margin:15px auto; }
+        .dpad button { width:60px; height:60px; font-size:1.5rem; }
+        .dpad-up { grid-area:up; } .dpad-left { grid-area:left; } .dpad-right { grid-area:right; } .dpad-down { grid-area:down; }
+        button { background:#f9d342; border:none; border-radius:15px; font-weight:bold; cursor:pointer; box-shadow:0 4px 0 #b47c2e; font-family:inherit; }
+        button:active { transform:translateY(3px); box-shadow:0 1px 0 #b47c2e; }
+        .back-btn { background:#b3c7e5; box-shadow:0 4px 0 #6b7f9c; padding:12px 25px; font-size:1rem; margin-top:10px; }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <h2>🗺️ Лабиринт</h2>
+    <div class="maze-grid" id="mazeGrid"></div>
+    <p>🎁 Найди подарок!</p>
+    <div class="dpad">
+        <button class="dpad-up" onclick="move(-1,0)">⬆️</button>
+        <button class="dpad-left" onclick="move(0,-1)">⬅️</button>
+        <button class="dpad-right" onclick="move(0,1)">➡️</button>
+        <button class="dpad-down" onclick="move(1,0)">⬇️</button>
+    </div>
+    <button class="back-btn" onclick="window.close()">↩️ Закрыть</button>
+</div>
+<script>
+// 3 случайные карты
+const MAZES = [
+    { map:[
+        ['#','#','#','#','#','#','#','#','#'],
+        ['#',' ',' ',' ','#',' ',' ',' ','#'],
+        ['#','#','#',' ','#','#','#',' ','#'],
+        ['#',' ','#',' ',' ',' ','#',' ','#'],
+        ['#',' ','#','#','#',' ','#',' ','#'],
+        ['#',' ',' ',' ','#',' ',' ',' ','#'],
+        ['#','#','#','#','#','#','#','#','#']
+    ], start:[1,1], gift:[5,7] },
+    { map:[
+        ['#','#','#','#','#','#','#','#','#'],
+        ['#',' ','#',' ',' ',' ','#',' ','#'],
+        ['#',' ','#',' ','#',' ','#',' ','#'],
+        ['#',' ',' ',' ','#',' ',' ',' ','#'],
+        ['#','#','#',' ','#',' ','#','#','#'],
+        ['#',' ',' ',' ',' ',' ',' ',' ','#'],
+        ['#','#','#','#','#','#','#','#','#']
+    ], start:[1,1], gift:[5,3] },
+    { map:[
+        ['#','#','#','#','#','#','#','#','#'],
+        ['#',' ',' ','#',' ',' ','#',' ','#'],
+        ['#',' ','#','#',' ','#','#',' ','#'],
+        ['#',' ','#',' ',' ',' ',' ',' ','#'],
+        ['#',' ',' ',' ','#','#','#',' ','#'],
+        ['#','#','#',' ',' ',' ',' ',' ','#'],
+        ['#','#','#','#','#','#','#','#','#']
+    ], start:[1,1], gift:[5,7] }
+];
+
+const selected = MAZES[Math.floor(Math.random() * MAZES.length)];
+const map = selected.map;
+let px = selected.start[0], py = selected.start[1];
+const gx = selected.gift[0], gy = selected.gift[1];
+
+function render() {
+    let h='';
+    for(let i=0;i<map.length;i++) for(let j=0;j<map[0].length;j++) {
+        let cls='maze-cell', c='';
+        if(map[i][j]==='#'){cls+=' wall';c='🧱';}
+        else if(i===px&&j===py){cls+=' player';c='🤖';}
+        else if(i===gx&&j===gy){cls+=' gift';c='🎁';}
+        else c='⬜';
+        h+=`<div class="${cls}">${c}</div>`;
+    }
+    document.getElementById('mazeGrid').innerHTML=h;
+}
+
+function move(dx,dy) {
+    const nx=px+dx, ny=py+dy;
+    if(map[nx]&&map[nx][ny]&&map[nx][ny]!=='#') {
+        px=nx; py=ny;
+        if(px===gx&&py===gy){alert('🎉 Ты нашёл подарок! +5🪙');window.close();}
+        render();
+    }
+}
+render();
+</script>
+</body>
+  </html>

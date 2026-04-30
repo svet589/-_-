@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚢 Морской бой — Академия</title>
+    <style>
+        * { box-sizing:border-box; margin:0; padding:0; }
+        body { font-family:'Comic Neue',cursive,sans-serif; background:radial-gradient(circle at 20% 20%,#f9d56e,#f8b042); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+        .game-container { max-width:600px; width:100%; background:rgba(255,255,255,0.95); border-radius:40px; padding:25px; box-shadow:0 20px 40px rgba(0,0,0,0.3); border:5px solid #ffb347; text-align:center; }
+        h2 { color:#2d4059; margin-bottom:10px; }
+        .boards { display:flex; gap:20px; justify-content:center; flex-wrap:wrap; }
+        .board-title { font-weight:bold; margin-bottom:5px; }
+        .grid { display:grid; grid-template-columns:repeat(8,1fr); gap:3px; background:#2c3e50; padding:8px; border-radius:15px; }
+        .cell { aspect-ratio:1; background:#3498db; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:0.9rem; cursor:pointer; }
+        .cell.hit { background:#e74c3c; }
+        .cell.miss { background:#95a5a6; }
+        .cell.disabled { pointer-events:none; }
+        .info { margin:10px 0; font-weight:bold; }
+        button { background:#b3c7e5; border:none; border-radius:20px; padding:10px 20px; font-weight:bold; cursor:pointer; font-family:inherit; box-shadow:0 4px 0 #6b7f9c; margin:5px; }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <h2>🚢 Морской бой</h2>
+    <div class="boards">
+        <div><div class="board-title">🎯 Твои выстрелы</div><div class="grid" id="playerGrid"></div></div>
+        <div><div class="board-title">🤖 Выстрелы бота</div><div class="grid" id="botGrid"></div></div>
+    </div>
+    <p class="info" id="info">✅ Твой ход! Выбери клетку</p>
+    <p>🚢 Твоих кораблей: <span id="playerShips">5</span> | 🤖 Кораблей бота: <span id="botShips">5</span></p>
+    <button onclick="location.reload()">🔄 Новая игра</button>
+    <button onclick="window.close()">↩️ Закрыть</button>
+</div>
+<script>
+let playerBoard=[], botBoard=[], playerShips=5, botShips=5, gameOver=false, playerTurn=true;
+
+function placeShips(b){let p=0;while(p<5){const r=Math.floor(Math.random()*8),c=Math.floor(Math.random()*8);if(b[r][c]!=='ship'){b[r][c]='ship';p++;}}}
+function init(){
+    playerBoard=Array(8).fill().map(()=>Array(8).fill(null));
+    botBoard=Array(8).fill().map(()=>Array(8).fill(null));
+    placeShips(playerBoard); placeShips(botBoard);
+    playerShips=5; botShips=5; gameOver=false; playerTurn=true;
+    render();
+}
+function render(){
+    document.getElementById('playerShips').textContent=playerShips;
+    document.getElementById('botShips').textContent=botShips;
+    let ph=''; for(let r=0;r<8;r++) for(let c=0;c<8;c++){
+        let cls='cell', ct='🌊';
+        if(playerBoard[r][c]==='hit'){cls+=' hit';ct='💥';}
+        else if(playerBoard[r][c]==='miss'){cls+=' miss';ct='❌';}
+        if(gameOver||!playerTurn||playerBoard[r][c]==='hit'||playerBoard[r][c]==='miss')cls+=' disabled';
+        ph+=`<div class="${cls}" onclick="playerShoot(${r},${c})">${ct}</div>`;
+    }
+    document.getElementById('playerGrid').innerHTML=ph;
+    let bh=''; for(let r=0;r<8;r++) for(let c=0;c<8;c++){
+        let cls='cell', ct='🌊';
+        if(botBoard[r][c]==='hit'){cls+=' hit';ct='💥';}
+        else if(botBoard[r][c]==='miss'){cls+=' miss';ct='❌';}
+        bh+=`<div class="${cls}">${ct}</div>`;
+    }
+    document.getElementById('botGrid').innerHTML=bh;
+}
+function playerShoot(r,c){
+    if(gameOver||!playerTurn)return;
+    if(playerBoard[r][c])return;
+    if(playerBoard[r][c]==='ship'){playerBoard[r][c]='hit';playerShips--;}
+    else playerBoard[r][c]='miss';
+    if(playerShips===0){gameOver=true;document.getElementById('info').textContent='🎉 ПОБЕДА!';render();return;}
+    playerTurn=false; document.getElementById('info').textContent='⏳ Бот думает...'; render();
+    setTimeout(botShoot,800);
+}
+function botShoot(){
+    if(gameOver||playerTurn)return;
+    const av=[];
+    for(let r=0;r<8;r++) for(let c=0;c<8;c++) if(!botBoard[r][c]) av.push({r,c});
+    if(av.length===0)return;
+    const s=av[Math.floor(Math.random()*av.length)];
+    if(botBoard[s.r][s.c]==='ship'){botBoard[s.r][s.c]='hit';botShips--;}
+    else botBoard[s.r][s.c]='miss';
+    if(botShips===0){gameOver=true;document.getElementById('info').textContent='😢 ПОРАЖЕНИЕ...';render();return;}
+    playerTurn=true; document.getElementById('info').textContent='✅ Твой ход!'; render();
+}
+init();
+</script>
+</body>
+</html>

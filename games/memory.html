@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧠 Найди пару — Академия</title>
+    <style>
+        * { box-sizing:border-box; margin:0; padding:0; }
+        body { font-family:'Comic Neue',cursive,sans-serif; background:radial-gradient(circle at 20% 20%,#f9d56e,#f8b042); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+        .game-container { max-width:500px; width:100%; background:rgba(255,255,255,0.95); border-radius:40px; padding:25px; box-shadow:0 20px 40px rgba(0,0,0,0.3); border:5px solid #ffb347; text-align:center; }
+        h2 { color:#2d4059; margin-bottom:15px; }
+        .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+        .card { aspect-ratio:1; background:#ffb347; border-radius:20px; display:flex; align-items:center; justify-content:center; font-size:1.5rem; font-weight:bold; cursor:pointer; box-shadow:0 5px 0 #b47c2e; transition:0.1s; }
+        .card.flipped { background:#a5d6a5; box-shadow:0 2px 0 #b47c2e; }
+        .card.matched { background:#d4edc9; opacity:0.7; cursor:default; }
+        button { background:#b3c7e5; border:none; border-radius:20px; padding:10px 20px; font-weight:bold; cursor:pointer; font-family:inherit; box-shadow:0 4px 0 #6b7f9c; margin-top:10px; }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <h2>🧠 Найди пару</h2>
+    <div class="grid" id="grid"></div>
+    <p id="msg">🎯 Найди все пары!</p>
+    <button onclick="window.close()">↩️ Закрыть</button>
+</div>
+<script>
+const pairs = ['🐱','🐶','🐰','🦊','🐻','🐼','🐨','🐯','🐷','🐸','🐣','🦋'];
+let cards = [], flipped=[], locked=false, matches=0;
+
+function init() {
+    const all = [...pairs, ...pairs];
+    all.sort(()=>Math.random()-0.5);
+    cards = all.map((v,i)=>({value:v,matched:false}));
+    flipped=[]; locked=false; matches=0;
+    render();
+}
+
+function render() {
+    let h='';
+    cards.forEach((c,i)=>{
+        let cls='card';
+        if(flipped.includes(i)||c.matched) cls+=' flipped';
+        if(c.matched) cls+=' matched';
+        h+=`<div class="${cls}" onclick="flip(${i})">${(flipped.includes(i)||c.matched)?c.value:'❓'}</div>`;
+    });
+    document.getElementById('grid').innerHTML=h;
+}
+
+function flip(i) {
+    if(locked||flipped.includes(i)||cards[i].matched||flipped.length===2) return;
+    flipped.push(i); render();
+    if(flipped.length===2) {
+        locked=true;
+        const a=cards[flipped[0]], b=cards[flipped[1]];
+        if(a.value===b.value) {
+            a.matched=true; b.matched=true; matches++; flipped=[]; locked=false;
+            if(matches===pairs.length) document.getElementById('msg').textContent='🎉 Все пары найдены!';
+        } else setTimeout(()=>{flipped=[];locked=false;render();},800);
+        render();
+    }
+}
+init();
+</script>
+</body>
+</html>
